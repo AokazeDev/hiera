@@ -435,3 +435,104 @@
   margin: 3px 0 0;
   color: var(--ink);
 }
+
+.permission-filter-bar {
+  margin: 14px 0 18px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.permission-filter-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  color: var(--muted);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.permission-filter-heading span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.filter-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 0;
+  background: transparent;
+  color: #7a2525;
+  font: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+.filter-reset:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.permission-filter-groups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+}
+.filter-group {
+  display: grid;
+  gap: 5px;
+}
+.filter-group > span {
+  color: var(--muted);
+  font:
+    9px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.filter-options button {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #9ea69d;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 7px;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+.filter-options button:hover {
+  border-color: var(--olive);
+  color: var(--ink);
+}
+.filter-options button.is-active {
+  border-color: var(--olive);
+  background: #d4e58d;
+  color: var(--ink);
+}
+.filter-options button.risk-safe:hover,
+.filter-options button.risk-safe.is-active {
+  border-color: #6d7e1f;
+  background: #dce9a7;
+  color: #40520a;
+}
+.filter-options button.risk-caution:hover,
+.filter-options button.risk-caution.is-active {
+  border-color: #b88a2e;
+  background: #f3e4b5;
+  color: #6b4d0a;
+}
+.filter-options button.risk-dangerous:hover,
+.filter-options button.risk-dangerous.is-active {
+  border-color: #a76868;
+  background: #f0dede;
+  color: #7a2525;
+}

@@ -2,7 +2,12 @@
 
 import { CopyPlus, Minus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { isValidPermissionKey } from "@/lib/luckperms";
+import { PermissionFilterBar } from "@/components/studio/permission-filter-bar";
+import {
+  defaultPermissionFilter,
+  filterPermissionNodes,
+  isValidPermissionKey,
+} from "@/lib/luckperms";
 import type { LuckPermsNode } from "@/lib/permissions";
 
 type PermissionNodeEditorProps = {
@@ -34,9 +39,8 @@ export function PermissionNodeEditor({
 }: PermissionNodeEditorProps) {
   const [key, setKey] = useState("");
   const [value, setValue] = useState(true);
-  const permissions = nodes.flatMap((node, index) =>
-    node.type === "permission" ? [{ node, index }] : [],
-  );
+  const [filters, setFilters] = useState(defaultPermissionFilter);
+  const permissions = filterPermissionNodes(nodes, filters);
   const invalidKey = key.length > 0 && !isValidPermissionKey(key);
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -82,6 +86,11 @@ export function PermissionNodeEditor({
           </p>
         )}
       </form>
+      <PermissionFilterBar
+        nodes={nodes}
+        filters={filters}
+        onChange={setFilters}
+      />
       <section
         className="direct-permission-list"
         aria-label="Permisos directos"
@@ -144,8 +153,9 @@ export function PermissionNodeEditor({
           })
         ) : (
           <p className="editor-empty">
-            {subjectLabel} no tiene permisos directos. Añade un nodo
-            personalizado.
+            {nodes.some((n) => n.type === "permission")
+              ? "Ningún permiso coincide con los filtros activos."
+              : `${subjectLabel} no tiene permisos directos. Añade un nodo personalizado.`}
           </p>
         )}
       </section>
