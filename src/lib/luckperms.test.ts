@@ -24,6 +24,7 @@ import {
   removeUserDirectPermission,
   removeUserMembership,
   renameGroup,
+  searchPermissions,
   setDirectPermissionValue,
   setUserDirectPermissionValue,
   setUserPrimaryGroup,
@@ -117,6 +118,65 @@ describe("LuckPerms node inspection", () => {
         attributes: [],
       },
     ]);
+  });
+});
+
+describe("Permission search", () => {
+  it("finds direct permissions in groups and users without matching inheritance", () => {
+    expect(
+      searchPermissions(
+        {
+          groups: {
+            moderator: {
+              nodes: [
+                { type: "permission", key: "server.mute", value: true },
+                { type: "inheritance", key: "group.muted", value: true },
+              ],
+            },
+          },
+          users: {
+            user: {
+              username: "Aokaze",
+              nodes: [
+                {
+                  type: "permission",
+                  key: "server.mute",
+                  value: false,
+                  context: { world: "nether" },
+                },
+              ],
+            },
+          },
+        },
+        "MUTE",
+      ),
+    ).toEqual([
+      {
+        subject: "group",
+        id: "moderator",
+        label: "moderator",
+        matches: [
+          { nodeIndex: 0, key: "server.mute", value: true, context: undefined },
+        ],
+      },
+      {
+        subject: "user",
+        id: "user",
+        label: "Aokaze",
+        matches: [
+          {
+            nodeIndex: 0,
+            key: "server.mute",
+            value: false,
+            context: { world: "nether" },
+          },
+        ],
+      },
+    ]);
+  });
+
+  it("does not return results for an empty search", () => {
+    expect(searchPermissions(backup, "  ")).toEqual([]);
   });
 });
 

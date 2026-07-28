@@ -1,6 +1,10 @@
-import { FileUp, UserRound, Users } from "lucide-react";
+"use client";
+
+import { FileUp, Search, UserRound, Users, X } from "lucide-react";
+import { useState } from "react";
 import { BackupDiagnostics } from "@/components/studio/backup-diagnostics";
 import { GroupManager } from "@/components/studio/group-manager";
+import { searchPermissions } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
 type BackupRailProps = {
@@ -26,6 +30,35 @@ export function BackupRail({
   onRenameGroup,
   onDeleteGroup,
 }: BackupRailProps) {
+  const [permissionSearch, setPermissionSearch] = useState("");
+  const searchResults = backup
+    ? searchPermissions(backup, permissionSearch)
+    : [];
+  const matchingGroupIds = new Set(
+    searchResults
+      .filter((result) => result.subject === "group")
+      .map((result) => result.id),
+  );
+  const matchingUserIds = new Set(
+    searchResults
+      .filter((result) => result.subject === "user")
+      .map((result) => result.id),
+  );
+  const filteredGroups = backup
+    ? Object.entries(backup.groups).filter(
+        ([name]) => !permissionSearch.trim() || matchingGroupIds.has(name),
+      )
+    : [];
+  const filteredUsers = backup
+    ? Object.entries(backup.users ?? {}).filter(
+        ([userId]) => !permissionSearch.trim() || matchingUserIds.has(userId),
+      )
+    : [];
+  const matchCount = searchResults.reduce(
+    (count, result) => count + result.matches.length,
+    0,
+  );
+
   return (
     <aside className="group-rail" aria-label="Grupos y usuarios">
       <div className="rail-heading">
@@ -38,8 +71,43 @@ export function BackupRail({
       </div>
       {backup ? (
         <>
+          <div className="permission-search">
+            <label htmlFor="backup-permission-search">
+              <Search size={13} aria-hidden="true" /> Buscar permiso
+            </label>
+            <div>
+              <input
+                id="backup-permission-search"
+                type="search"
+                value={permissionSearch}
+                onChange={(event) => setPermissionSearch(event.target.value)}
+                placeholder="ej. essentials.fly"
+                aria-describedby={
+                  permissionSearch.trim()
+                    ? "permission-search-summary"
+                    : undefined
+                }
+              />
+              {permissionSearch && (
+                <button
+                  type="button"
+                  aria-label="Limpiar búsqueda de permisos"
+                  onClick={() => setPermissionSearch("")}
+                >
+                  <X size={13} aria-hidden="true" />
+                </button>
+              )}
+            </div>
+            {permissionSearch.trim() && (
+              <output id="permission-search-summary">
+                {matchCount
+                  ? `${matchCount} coincidencias en ${matchingGroupIds.size} grupos y ${matchingUserIds.size} usuarios.`
+                  : "No hay permisos directos que coincidan."}
+              </output>
+            )}
+          </div>
           <div className="group-list">
-            {Object.entries(backup.groups).map(([name, group]) => (
+            {filteredGroups.map(([name, group]) => (
               <button
                 type="button"
                 key={name}
@@ -57,6 +125,9 @@ export function BackupRail({
               </button>
             ))}
           </div>
+          {permissionSearch.trim() && !filteredGroups.length && (
+            <p className="permission-search-empty">Ningún grupo coincide.</p>
+          )}
           <BackupDiagnostics backup={backup} />
           <GroupManager
             backup={backup}
@@ -69,9 +140,9 @@ export function BackupRail({
             <span>USUARIOS</span>
             <small>{Object.keys(backup.users ?? {}).length}</small>
           </div>
-          {Object.entries(backup.users ?? {}).length ? (
+          {filteredUsers.length ? (
             <div className="group-list user-list">
-              {Object.entries(backup.users ?? {}).map(([userId, user]) => (
+              {filteredUsers.map(([userId, user]) => (
                 <button
                   type="button"
                   key={userId}
@@ -85,7 +156,11 @@ export function BackupRail({
               ))}
             </div>
           ) : (
-            <p className="user-empty">No hay usuarios en este backup.</p>
+            <p className="user-empty">
+              {permissionSearch.trim()
+                ? "Ningún usuario coincide."
+                : "No hay usuarios en este backup."}
+            </p>
           )}
           <div className="user-count">
             <Users size={15} /> {Object.keys(backup.users ?? {}).length}{" "}

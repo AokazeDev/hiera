@@ -191,6 +191,59 @@
   font-size: 13px;
   line-height: 1.5;
 }
+.permission-search {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 14px;
+}
+.permission-search > label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.permission-search > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  border: 1px solid #9ea69d;
+  background: #f7f5ee;
+}
+.permission-search input {
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 8px;
+  font:
+    11px var(--font-geist-mono),
+    monospace;
+}
+.permission-search button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid #9ea69d;
+  background: transparent;
+  color: var(--muted);
+  padding: 0 7px;
+}
+.permission-search output,
+.permission-search-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+.permission-search-empty {
+  padding: 8px 0;
+}
 .inheritance-label {
   margin: 0 0 8px;
   color: var(--muted);
