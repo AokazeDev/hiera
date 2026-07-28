@@ -368,3 +368,69 @@
 .safety-note p {
   margin: 0;
 }
+.export-preview {
+  max-height: min(680px, calc(100svh - 32px));
+  overflow: auto;
+}
+.group-dialog.export-preview > div {
+  display: grid;
+  gap: 20px;
+  padding: 22px;
+}
+.export-preview header,
+.export-preview footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.export-preview h2 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: -0.04em;
+}
+.export-preview header button {
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 4px;
+}
+.export-preview-intro {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.export-diff {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+}
+.export-diff > ul,
+.export-diff-entity > ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding-left: 17px;
+}
+.export-diff-entity {
+  display: grid;
+  gap: 7px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.export-diff-entity + .export-diff-entity {
+  margin-top: 12px;
+}
+.export-diff code,
+.export-diff-entity code {
+  overflow-wrap: anywhere;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+}

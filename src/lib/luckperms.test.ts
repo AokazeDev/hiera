@@ -7,6 +7,7 @@ import {
   createGroup,
   deleteGroup,
   diagnoseBackup,
+  diffBackups,
   emptyBackupHistory,
   getEffectiveNodes,
   getEffectiveUserNodes,
@@ -213,6 +214,65 @@ describe("Edit history", () => {
     expect(next.future).toEqual([]);
     expect(next.past).toHaveLength(1);
     expect(next.past[0].label).toBe("Cambiar permiso");
+  });
+});
+
+describe("Backup export diff", () => {
+  it("describes group, user and node changes against the imported backup", () => {
+    const changed = {
+      groups: {
+        default: {
+          nodes: [{ type: "permission", key: "server.chat", value: false }],
+        },
+        builder: {
+          nodes: [{ type: "permission", key: "server.build", value: true }],
+        },
+      },
+      users: {
+        "user-id": {
+          primaryGroup: "builder",
+          nodes: [{ type: "permission", key: "server.fly", value: true }],
+        },
+      },
+      metadata: { format: "v2" },
+    } satisfies LuckPermsBackup;
+    const diff = diffBackups(backup, changed);
+
+    expect(diff.groups).toEqual([
+      expect.objectContaining({ id: "builder", kind: "added" }),
+      expect.objectContaining({ id: "cyclic", kind: "removed" }),
+      expect.objectContaining({
+        id: "default",
+        kind: "changed",
+        nodeChanges: [
+          {
+            kind: "removed",
+            node: { type: "permission", key: "server.chat", value: true },
+          },
+          {
+            kind: "added",
+            node: { type: "permission", key: "server.chat", value: false },
+          },
+        ],
+      }),
+      expect.objectContaining({ id: "moderator", kind: "removed" }),
+    ]);
+    expect(diff.users).toEqual([
+      expect.objectContaining({ id: "user-id", kind: "added" }),
+    ]);
+    expect(diff.rootChanges).toEqual([
+      { field: "metadata", before: undefined, after: { format: "v2" } },
+    ]);
+    expect(diff.changeCount).toBeGreaterThan(0);
+  });
+
+  it("ignores object key order and reports no change for an equal backup", () => {
+    expect(
+      diffBackups(
+        backup,
+        JSON.parse(JSON.stringify(backup)) as LuckPermsBackup,
+      ),
+    ).toMatchObject({ groups: [], users: [], rootChanges: [], changeCount: 0 });
   });
 });
 

@@ -1,17 +1,12 @@
 "use client";
 
 import gsap from "gsap";
-import {
-  BookOpen,
-  Download,
-  FilePenLine,
-  FileUp,
-  GitCompareArrows,
-} from "lucide-react";
+import { BookOpen, FilePenLine, FileUp, GitCompareArrows } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { BackupRail } from "@/components/studio/backup-rail";
 import { CatalogPanel } from "@/components/studio/catalog-panel";
+import { ExportPreview } from "@/components/studio/export-preview";
 import { GroupComparison } from "@/components/studio/group-comparison";
 import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
@@ -46,6 +41,9 @@ export function Studio() {
   const root = useRef<HTMLElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const [backup, setBackup] = useState<LuckPermsBackup | null>(null);
+  const [originalBackup, setOriginalBackup] = useState<LuckPermsBackup | null>(
+    null,
+  );
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [history, setHistory] = useState(emptyBackupHistory);
@@ -82,6 +80,7 @@ export function Studio() {
         if (!parsed.groups || typeof parsed.groups !== "object")
           throw new Error("No contiene grupos de LuckPerms.");
         setBackup(parsed);
+        setOriginalBackup(parsed);
         setSelectedGroup(Object.keys(parsed.groups)[0] ?? null);
         setSelectedUser(null);
         setHistory(emptyBackupHistory);
@@ -319,14 +318,12 @@ export function Studio() {
               <GitCompareArrows size={15} /> Comparar
             </button>
           </nav>
-          {backup && (
-            <button
-              type="button"
-              className="text-button"
-              onClick={exportBackup}
-            >
-              <Download size={15} /> Exportar JSON
-            </button>
+          {backup && originalBackup && (
+            <ExportPreview
+              original={originalBackup}
+              backup={backup}
+              onExport={exportBackup}
+            />
           )}
         </div>
         <input
