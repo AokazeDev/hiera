@@ -1,5 +1,6 @@
 "use client";
 
+import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
@@ -44,6 +45,10 @@ export function GroupPermissionEditor({
             onAdd={onAdd}
             onSetValue={onSetValue}
             onRemove={onRemove}
+          />
+          <NodeInspector
+            nodes={group.nodes}
+            subjectLabel={`el grupo ${groupName}`}
           />
         </>
       ) : (

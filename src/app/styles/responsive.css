@@ -102,6 +102,15 @@
     align-items: start;
     flex-direction: column;
   }
+  .node-inspector-list summary {
+    grid-template-columns: 1fr auto;
+  }
+  .node-inspector-list summary code {
+    grid-column: 1 / -1;
+  }
+  .node-inspector-list dl {
+    grid-template-columns: 1fr;
+  }
   .permission-actions {
     width: 100%;
   }

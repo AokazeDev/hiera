@@ -229,3 +229,73 @@
 .user-direct-permissions .editor-intro {
   margin: 0 0 16px;
 }
+.node-inspector {
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px solid var(--ink);
+}
+.node-inspector-heading p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.node-inspector-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+.node-inspector-list li {
+  border-bottom: 1px solid var(--line);
+}
+.node-inspector-list summary {
+  display: grid;
+  grid-template-columns: minmax(90px, 0.45fr) minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  cursor: pointer;
+  padding: 10px 0;
+  font-size: 11px;
+}
+.node-inspector-list summary::marker {
+  color: var(--olive);
+}
+.node-inspector-list summary span,
+.node-inspector-list summary small,
+.node-inspector-list dd,
+.node-inspector-list dt {
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+}
+.node-inspector-list summary code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font:
+    11px var(--font-geist-mono),
+    monospace;
+}
+.node-inspector-list summary small {
+  color: var(--muted);
+}
+.node-inspector-list dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 18px;
+  margin: 0 0 12px;
+  padding: 10px 0 0 16px;
+  border-top: 1px dotted #b9b8ae;
+}
+.node-inspector-list dl div {
+  min-width: 0;
+}
+.node-inspector-list dt {
+  color: var(--muted);
+}
+.node-inspector-list dd {
+  overflow-wrap: anywhere;
+  margin: 3px 0 0;
+  color: var(--ink);
+}

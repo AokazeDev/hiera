@@ -11,6 +11,7 @@ import {
   getGroupReferences,
   getParents,
   getUserMemberships,
+  inspectNodes,
   isValidPermissionKey,
   recordBackupChange,
   redoBackupChange,
@@ -74,6 +75,42 @@ describe("LuckPerms inheritance resolution", () => {
 
   it("terminates a cyclic inheritance chain", () => {
     expect(getEffectiveNodes(backup, "cyclic")).toEqual([]);
+  });
+});
+
+describe("LuckPerms node inspection", () => {
+  it("keeps every node type and exposes its context and extra fields", () => {
+    expect(
+      inspectNodes([
+        {
+          type: "prefix",
+          key: "prefix.100.staff",
+          value: true,
+          context: { server: "lobby" },
+          priority: 100,
+        },
+        { type: "custom-node", key: "custom.value", value: false },
+      ]),
+    ).toEqual([
+      {
+        index: 0,
+        type: "prefix",
+        typeLabel: "Prefijo",
+        key: "prefix.100.staff",
+        value: true,
+        context: [["server", "lobby"]],
+        attributes: [["priority", "100"]],
+      },
+      {
+        index: 1,
+        type: "custom-node",
+        typeLabel: "Tipo no reconocido: custom-node",
+        key: "custom.value",
+        value: false,
+        context: [],
+        attributes: [],
+      },
+    ]);
   });
 });
 

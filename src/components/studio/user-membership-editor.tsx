@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
 import { getUserMemberships, validateUserMembership } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
@@ -194,6 +195,10 @@ export function UserMembershipEditor({
           onRemove={onRemovePermission}
         />
       </section>
+      <NodeInspector
+        nodes={user.nodes}
+        subjectLabel={`el usuario ${displayName}`}
+      />
     </section>
   );
 }
