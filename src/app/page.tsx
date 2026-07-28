@@ -1,65 +1,189 @@
-import Image from "next/image";
+import {
+  ArrowUpRight,
+  Braces,
+  FileJson,
+  Network,
+  ShieldCheck,
+} from "lucide-react";
+import Link from "next/link";
+
+const steps = [
+  ["01", "Exporta", "/lp export hiera-backup.json"],
+  ["02", "Inspecciona", "Carga el archivo en el estudio local."],
+  ["03", "Decide", "Comprueba herencias y aplica permisos con contexto."],
+  ["04", "Importa", "/lp import hiera-backup.json --replace"],
+];
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main>
+      <nav className="site-nav" aria-label="Navegacion principal">
+        <Link className="wordmark" href="/">
+          HIERA<span>.</span>
+        </Link>
+        <div className="nav-links">
+          <a href="#flujo">Flujo</a>
+          <a href="#principios">Principios</a>
+          <Link href="/studio">Catalogo</Link>
+        </div>
+        <Link className="nav-action" href="/studio">
+          Abrir estudio <ArrowUpRight size={15} />
+        </Link>
+      </nav>
+
+      <section className="hero">
+        <div className="hero-copy">
+          <p className="eyebrow">LUCKPERMS, SIN ADIVINAR</p>
+          <h1>
+            La jerarquia de tu servidor, <em>por fin</em> legible.
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="hero-lede">
+            Hiera convierte un respaldo de LuckPerms en un mapa operativo:
+            permisos directos, excepciones, usuarios y herencias en una misma
+            superficie de trabajo.
+          </p>
+          <div className="hero-actions">
+            <Link className="primary-action" href="/studio">
+              Abrir el estudio <ArrowUpRight size={17} />
+            </Link>
+            <a className="quiet-action" href="#flujo">
+              Como exportar un backup
+            </a>
+          </div>
+        </div>
+        <div className="permission-atlas">
+          <div className="atlas-topline">
+            <span>MAPA DE HERENCIA</span>
+            <span>RESUELTO</span>
+          </div>
+          <svg
+            viewBox="0 0 640 390"
+            role="img"
+            aria-label="Grupo default heredado por builder y moderator; admin hereda de moderator"
+          >
+            <path
+              className="graph-line"
+              d="M155 125 C155 182 155 182 155 242"
+            />
+            <path
+              className="graph-line"
+              d="M155 125 C310 182 455 182 455 242"
+            />
+            <path
+              className="graph-line"
+              d="M455 125 C455 182 455 182 455 242"
+            />
+            <g className="graph-token graph-default">
+              <rect x="90" y="65" width="130" height="60" rx="8" />
+              <text x="155" y="101">
+                default
+              </text>
+            </g>
+            <g className="graph-token graph-admin">
+              <rect x="390" y="65" width="130" height="60" rx="8" />
+              <text x="455" y="101">
+                admin
+              </text>
+            </g>
+            <g className="graph-token graph-builder">
+              <rect x="90" y="242" width="130" height="60" rx="8" />
+              <text x="155" y="278">
+                builder
+              </text>
+            </g>
+            <g className="graph-token graph-moderator">
+              <rect x="390" y="242" width="130" height="60" rx="8" />
+              <text x="455" y="278">
+                moderator
+              </text>
+            </g>
+          </svg>
+          <div className="atlas-footer">
+            <span>
+              <i className="signal direct" /> Directo
+            </span>
+            <span>
+              <i className="signal inherited" /> Heredado
+            </span>
+            <strong>48 resueltos</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="manifesto" id="principios">
+        <p className="eyebrow">UN ARCHIVO NO DEBERIA SER UNA CAJA NEGRA</p>
+        <p className="manifesto-copy">
+          Los permisos son infraestructura. Hiera los trata como tal: con
+          procedencia, contexto, decisiones explícitas y una salida que sigue
+          siendo compatible con LuckPerms.
+        </p>
+        <div className="principle-rail">
+          <article>
+            <FileJson size={19} />
+            <h2>Local primero</h2>
+            <p>
+              El backup se interpreta en tu navegador. No se suben UUIDs ni
+              configuraciones de tu comunidad.
+            </p>
+          </article>
+          <article>
+            <Network size={19} />
+            <h2>Herencia visible</h2>
+            <p>
+              Cada nodo efectivo conserva el grupo que lo concedió o denegó.
+            </p>
+          </article>
+          <article>
+            <Braces size={19} />
+            <h2>Catalogos trazables</h2>
+            <p>
+              Las plantillas declaran plugin, versión, origen, fecha y nivel de
+              recomendación.
+            </p>
+          </article>
+          <article>
+            <ShieldCheck size={19} />
+            <h2>Exportacion consciente</h2>
+            <p>
+              Revisa el resultado y descarga un JSON antes de tocar producción.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section className="workflow" id="flujo">
+        <div className="workflow-intro">
+          <p className="eyebrow">DEL SERVIDOR AL MAPA</p>
+          <h2>Un flujo seguro de cuatro movimientos.</h2>
+          <p>
+            Hiera trabaja con el formato de exportación de LuckPerms. Haz una
+            copia antes de importar cambios en un servidor activo.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+        <ol className="steps">
+          {steps.map(([number, title, body]) => (
+            <li key={number}>
+              <span>{number}</span>
+              <div>
+                <h3>{title}</h3>
+                <code>{body}</code>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      <section className="closing">
+        <p className="eyebrow">PRIMER CATALOGO DISPONIBLE</p>
+        <h2>AuthMe Reloaded, documentado permiso a permiso.</h2>
+        <p>
+          Filtra permisos de administración, jugadores y privilegios que
+          conviene reservar para un grupo específico.
+        </p>
+        <Link className="primary-action" href="/studio?catalog=authme-reloaded">
+          Explorar AuthMe Reloaded <ArrowUpRight size={17} />
+        </Link>
+      </section>
+    </main>
   );
 }
