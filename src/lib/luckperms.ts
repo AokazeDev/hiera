@@ -5,4 +5,5 @@ export * from "./luckperms/effective-resolution";
 export * from "./luckperms/group-lifecycle";
 export * from "./luckperms/inheritance";
 export * from "./luckperms/node-inspection";
+export * from "./luckperms/permission-transfers";
 export * from "./luckperms/user-memberships";

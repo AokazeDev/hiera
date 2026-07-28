@@ -23,11 +23,13 @@ import {
   setDirectPermissionValue,
   setUserDirectPermissionValue,
   setUserPrimaryGroup,
+  transferGroupPermission,
   undoBackupChange,
   upsertGlobalPermission,
   upsertUserGlobalPermission,
   validateGroupDeletion,
   validateGroupInheritance,
+  validateGroupPermissionTransfer,
   validateNewGroupName,
   validateUserMembership,
 } from "./luckperms";
@@ -257,6 +259,91 @@ describe("Direct permission editing", () => {
     expect(isValidPermissionKey("plugin.permission")).toBe(true);
     expect(isValidPermissionKey(" ")).toBe(false);
     expect(isValidPermissionKey("plugin permission")).toBe(false);
+  });
+});
+
+describe("Group permission transfers", () => {
+  const transferBackup: LuckPermsBackup = {
+    groups: {
+      source: {
+        nodes: [
+          {
+            type: "permission",
+            key: "server.mute",
+            value: false,
+            context: { world: "nether" },
+            expiry: 123,
+          },
+          { type: "permission", key: "server.chat", value: true },
+        ],
+      },
+      target: {
+        nodes: [{ type: "permission", key: "server.kick", value: true }],
+      },
+    },
+  };
+
+  it("copies the selected permission with its context and attributes", () => {
+    const changed = transferGroupPermission(
+      transferBackup,
+      "source",
+      0,
+      "target",
+      "copy",
+    );
+
+    expect(changed.groups.source.nodes).toHaveLength(2);
+    expect(changed.groups.target.nodes.at(-1)).toEqual({
+      type: "permission",
+      key: "server.mute",
+      value: false,
+      context: { world: "nether" },
+      expiry: 123,
+    });
+  });
+
+  it("moves only the selected permission and preserves the remaining source nodes", () => {
+    const changed = transferGroupPermission(
+      transferBackup,
+      "source",
+      0,
+      "target",
+      "move",
+    );
+
+    expect(changed.groups.source.nodes).toEqual([
+      { type: "permission", key: "server.chat", value: true },
+    ]);
+    expect(changed.groups.target.nodes.at(-1)).toMatchObject({
+      key: "server.mute",
+      context: { world: "nether" },
+    });
+  });
+
+  it("rejects a target with the same permission in the same context", () => {
+    const withDuplicate: LuckPermsBackup = {
+      ...transferBackup,
+      groups: {
+        ...transferBackup.groups,
+        target: {
+          nodes: [
+            {
+              type: "permission",
+              key: "server.mute",
+              value: true,
+              context: { world: "nether" },
+            },
+          ],
+        },
+      },
+    };
+
+    expect(
+      validateGroupPermissionTransfer(withDuplicate, "source", 0, "target"),
+    ).toBe("El grupo de destino ya tiene este permiso en el mismo contexto.");
+    expect(
+      transferGroupPermission(withDuplicate, "source", 0, "target", "copy"),
+    ).toBe(withDuplicate);
   });
 });
 

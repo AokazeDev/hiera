@@ -102,6 +102,9 @@
     align-items: start;
     flex-direction: column;
   }
+  .permission-transfer-controls {
+    grid-template-columns: 1fr;
+  }
   .node-inspector-list summary {
     grid-template-columns: 1fr auto;
   }

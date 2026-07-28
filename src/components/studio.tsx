@@ -9,6 +9,7 @@ import { CatalogPanel } from "@/components/studio/catalog-panel";
 import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
 import { UserMembershipEditor } from "@/components/studio/user-membership-editor";
+import type { PermissionTransferMode } from "@/lib/luckperms";
 import {
   addGroupInheritance,
   addUserMembership,
@@ -25,6 +26,7 @@ import {
   setDirectPermissionValue,
   setUserDirectPermissionValue,
   setUserPrimaryGroup,
+  transferGroupPermission,
   undoBackupChange,
   upsertGlobalPermission,
   upsertUserGlobalPermission,
@@ -139,6 +141,26 @@ export function Studio() {
     updateBackup(
       removeDirectPermission(backup, selectedGroup, nodeIndex),
       `Eliminar permiso de ${selectedGroup}`,
+    );
+  }
+
+  function transferPermission(
+    nodeIndex: number,
+    targetGroup: string,
+    mode: PermissionTransferMode,
+  ) {
+    if (!backup || !selectedGroup) return;
+    const node = backup.groups[selectedGroup]?.nodes[nodeIndex];
+    if (!node || node.type !== "permission") return;
+    updateBackup(
+      transferGroupPermission(
+        backup,
+        selectedGroup,
+        nodeIndex,
+        targetGroup,
+        mode,
+      ),
+      `${mode === "copy" ? "Copiar" : "Mover"} ${node.key} de ${selectedGroup} a ${targetGroup}`,
     );
   }
 
@@ -363,6 +385,7 @@ export function Studio() {
             onAdd={addPermission}
             onSetValue={setPermissionValue}
             onRemove={removePermission}
+            onTransfer={transferPermission}
           />
         ) : (
           <CatalogPanel

@@ -1,6 +1,6 @@
 "use client";
 
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { CopyPlus, Minus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { isValidPermissionKey } from "@/lib/luckperms";
 import type { LuckPermsNode } from "@/lib/permissions";
@@ -11,6 +11,7 @@ type PermissionNodeEditorProps = {
   onAdd: (key: string, value: boolean) => void;
   onSetValue: (nodeIndex: number, value: boolean) => void;
   onRemove: (nodeIndex: number) => void;
+  onPrepareTransfer?: (nodeIndex: number) => void;
 };
 
 function contextLabel(node: LuckPermsNode): string | null {
@@ -29,6 +30,7 @@ export function PermissionNodeEditor({
   onAdd,
   onSetValue,
   onRemove,
+  onPrepareTransfer,
 }: PermissionNodeEditorProps) {
   const [key, setKey] = useState("");
   const [value, setValue] = useState(true);
@@ -127,6 +129,15 @@ export function PermissionNodeEditor({
                   >
                     <Trash2 size={14} aria-hidden="true" />
                   </button>
+                  {onPrepareTransfer && (
+                    <button
+                      type="button"
+                      className="transfer-permission"
+                      onClick={() => onPrepareTransfer(index)}
+                    >
+                      <CopyPlus size={13} aria-hidden="true" /> Copiar o mover
+                    </button>
+                  )}
                 </div>
               </article>
             );

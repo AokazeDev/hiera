@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
+import { PermissionTransferPanel } from "@/components/studio/permission-transfer-panel";
+import type { PermissionTransferMode } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
 type GroupPermissionEditorProps = {
@@ -10,6 +13,11 @@ type GroupPermissionEditorProps = {
   onAdd: (key: string, value: boolean) => void;
   onSetValue: (nodeIndex: number, value: boolean) => void;
   onRemove: (nodeIndex: number) => void;
+  onTransfer: (
+    nodeIndex: number,
+    targetGroup: string,
+    mode: PermissionTransferMode,
+  ) => void;
 };
 
 export function GroupPermissionEditor({
@@ -18,12 +26,16 @@ export function GroupPermissionEditor({
   onAdd,
   onSetValue,
   onRemove,
+  onTransfer,
 }: GroupPermissionEditorProps) {
   const group = backup && groupName ? backup.groups[groupName] : null;
+  const [transferNodeIndex, setTransferNodeIndex] = useState<number | null>(
+    null,
+  );
 
   return (
     <section className="workspace" aria-labelledby="group-editor-title">
-      {group && groupName ? (
+      {backup && group && groupName ? (
         <>
           <div className="workspace-title">
             <div>
@@ -45,6 +57,19 @@ export function GroupPermissionEditor({
             onAdd={onAdd}
             onSetValue={onSetValue}
             onRemove={onRemove}
+            onPrepareTransfer={setTransferNodeIndex}
+          />
+          <PermissionTransferPanel
+            backup={backup}
+            sourceGroup={groupName}
+            sourceNodeIndex={transferNodeIndex}
+            onClose={() => setTransferNodeIndex(null)}
+            onTransfer={(targetGroup, mode) => {
+              if (transferNodeIndex !== null) {
+                onTransfer(transferNodeIndex, targetGroup, mode);
+              }
+              setTransferNodeIndex(null);
+            }}
           />
           <NodeInspector
             nodes={group.nodes}
