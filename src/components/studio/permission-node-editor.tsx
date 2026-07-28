@@ -3,9 +3,11 @@
 import { CopyPlus, Minus, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { PermissionFilterBar } from "@/components/studio/permission-filter-bar";
+import { PermissionGroupingControl } from "@/components/studio/permission-grouping-control";
 import {
   defaultPermissionFilter,
   filterPermissionNodes,
+  groupPermissions,
   isValidPermissionKey,
 } from "@/lib/luckperms";
 import type { LuckPermsNode } from "@/lib/permissions";
@@ -40,7 +42,15 @@ export function PermissionNodeEditor({
   const [key, setKey] = useState("");
   const [value, setValue] = useState(true);
   const [filters, setFilters] = useState(defaultPermissionFilter);
+  const [grouping, setGrouping] = useState<"flat" | "plugin" | "segment">(
+    "flat",
+  );
   const permissions = filterPermissionNodes(nodes, filters);
+  const permissionGroups = groupPermissions(
+    permissions,
+    (permission) => permission.node.key,
+    grouping,
+  );
   const invalidKey = key.length > 0 && !isValidPermissionKey(key);
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -91,66 +101,78 @@ export function PermissionNodeEditor({
         filters={filters}
         onChange={setFilters}
       />
+      <PermissionGroupingControl value={grouping} onChange={setGrouping} />
       <section
         className="direct-permission-list"
         aria-label="Permisos directos"
       >
         {permissions.length ? (
-          permissions.map(({ node, index }) => {
-            const context = contextLabel(node);
-            return (
-              <article
-                className="direct-permission"
-                key={`${index}-${node.key}`}
-              >
-                <div>
-                  <code>{node.key}</code>
-                  {context && <small>Contexto: {context}</small>}
-                </div>
-                <div className="permission-actions">
-                  <button
-                    type="button"
-                    className={
-                      node.value
-                        ? "permission-state is-granted"
-                        : "permission-state"
-                    }
-                    onClick={() => onSetValue(index, true)}
+          permissionGroups.map((group) => (
+            <div className="permission-group" key={group.id}>
+              {grouping !== "flat" && (
+                <h3>
+                  <code>{group.label}</code>
+                  <span>{group.items.length}</span>
+                </h3>
+              )}
+              {group.items.map(({ node, index }) => {
+                const context = contextLabel(node);
+                return (
+                  <article
+                    className="direct-permission"
+                    key={`${index}-${node.key}`}
                   >
-                    <Plus size={13} aria-hidden="true" /> Conceder
-                  </button>
-                  <button
-                    type="button"
-                    className={
-                      !node.value
-                        ? "permission-state is-denied"
-                        : "permission-state"
-                    }
-                    onClick={() => onSetValue(index, false)}
-                  >
-                    <Minus size={13} aria-hidden="true" /> Denegar
-                  </button>
-                  <button
-                    type="button"
-                    className="remove-permission"
-                    aria-label={`Eliminar ${node.key} de ${subjectLabel}`}
-                    onClick={() => onRemove(index)}
-                  >
-                    <Trash2 size={14} aria-hidden="true" />
-                  </button>
-                  {onPrepareTransfer && (
-                    <button
-                      type="button"
-                      className="transfer-permission"
-                      onClick={() => onPrepareTransfer(index)}
-                    >
-                      <CopyPlus size={13} aria-hidden="true" /> Copiar o mover
-                    </button>
-                  )}
-                </div>
-              </article>
-            );
-          })
+                    <div>
+                      <code>{node.key}</code>
+                      {context && <small>Contexto: {context}</small>}
+                    </div>
+                    <div className="permission-actions">
+                      <button
+                        type="button"
+                        className={
+                          node.value
+                            ? "permission-state is-granted"
+                            : "permission-state"
+                        }
+                        onClick={() => onSetValue(index, true)}
+                      >
+                        <Plus size={13} aria-hidden="true" /> Conceder
+                      </button>
+                      <button
+                        type="button"
+                        className={
+                          !node.value
+                            ? "permission-state is-denied"
+                            : "permission-state"
+                        }
+                        onClick={() => onSetValue(index, false)}
+                      >
+                        <Minus size={13} aria-hidden="true" /> Denegar
+                      </button>
+                      <button
+                        type="button"
+                        className="remove-permission"
+                        aria-label={`Eliminar ${node.key} de ${subjectLabel}`}
+                        onClick={() => onRemove(index)}
+                      >
+                        <Trash2 size={14} aria-hidden="true" />
+                      </button>
+                      {onPrepareTransfer && (
+                        <button
+                          type="button"
+                          className="transfer-permission"
+                          onClick={() => onPrepareTransfer(index)}
+                        >
+                          <CopyPlus size={13} aria-hidden="true" /> Copiar o
+                          mover
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ))
         ) : (
           <p className="editor-empty">
             {nodes.some((n) => n.type === "permission")

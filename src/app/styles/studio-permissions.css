@@ -536,3 +536,60 @@
   background: #f0dede;
   color: #7a2525;
 }
+.permission-grouping-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+}
+.permission-grouping-control legend {
+  color: var(--muted);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.permission-grouping-control > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.permission-grouping-control button {
+  border: 1px solid #9ea69d;
+  background: transparent;
+  color: var(--muted);
+  padding: 4px 7px;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  cursor: pointer;
+}
+.permission-grouping-control button:hover,
+.permission-grouping-control button.is-active {
+  border-color: var(--olive);
+  color: var(--ink);
+}
+.permission-grouping-control button.is-active {
+  background: #d4e58d;
+}
+.permission-group + .permission-group {
+  margin-top: 14px;
+}
+.permission-group > h3 {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  border-bottom: 1px solid var(--line);
+  padding: 7px 0;
+  color: var(--muted);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+}
+.permission-group > h3 code {
+  font: inherit;
+}

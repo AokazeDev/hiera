@@ -5,12 +5,14 @@ import { useState } from "react";
 import { EditHistory } from "@/components/studio/edit-history";
 import { GroupInheritanceEditor } from "@/components/studio/group-inheritance-editor";
 import { PermissionFilterBar } from "@/components/studio/permission-filter-bar";
+import { PermissionGroupingControl } from "@/components/studio/permission-grouping-control";
 import {
   type BackupHistory,
   defaultPermissionFilter,
   filterResolvedPermissions,
   getEffectiveNodes,
   getEffectiveUserNodes,
+  groupPermissions,
 } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
@@ -38,6 +40,9 @@ export function ResolutionPanel({
   onRemoveInheritance,
 }: ResolutionPanelProps) {
   const [filters, setFilters] = useState(defaultPermissionFilter);
+  const [grouping, setGrouping] = useState<"flat" | "plugin" | "segment">(
+    "flat",
+  );
   const group = backup && groupName ? backup.groups[groupName] : null;
   const effective =
     backup && groupName ? getEffectiveNodes(backup, groupName) : [];
@@ -52,6 +57,41 @@ export function ResolutionPanel({
   );
   const totalCount = selectedEffective.length;
   const filteredCount = filteredEffective.length;
+  const permissionGroups = groupPermissions(
+    filteredEffective,
+    (permission) => permission.key,
+    grouping,
+  );
+
+  function renderEffectiveList() {
+    return (
+      <div className="effective-list">
+        {permissionGroups.map((group) => (
+          <div className="permission-group" key={group.id}>
+            {grouping !== "flat" && (
+              <h3>
+                <code>{group.label}</code>
+                <span>{group.items.length}</span>
+              </h3>
+            )}
+            {group.items.slice(0, 10).map((node) => (
+              <div key={`${node.origin}-${node.key}`}>
+                <span className={node.value ? "value-true" : "value-false"}>
+                  {node.value ? "+" : "-"}
+                </span>
+                <code>{node.key}</code>
+                <small>{node.inherited ? node.origin : "directo"}</small>
+              </div>
+            ))}
+            {group.items.length > 10 && <p>+ {group.items.length - 10} más</p>}
+          </div>
+        ))}
+        {filteredEffective.length === 0 && totalCount > 0 && (
+          <p>Ningún permiso coincide con los filtros activos.</p>
+        )}
+      </div>
+    );
+  }
 
   return (
     <aside className="resolution-panel">
@@ -77,6 +117,7 @@ export function ResolutionPanel({
             onChange={setFilters}
             showOrigin
           />
+          <PermissionGroupingControl value={grouping} onChange={setGrouping} />
           <div className="effective-count">
             <strong>{filteredCount}</strong>
             <span>
@@ -85,23 +126,7 @@ export function ResolutionPanel({
                 : `de ${totalCount} permisos efectivos`}
             </span>
           </div>
-          <div className="effective-list">
-            {filteredEffective.slice(0, 10).map((node) => (
-              <div key={`${node.origin}-${node.key}`}>
-                <span className={node.value ? "value-true" : "value-false"}>
-                  {node.value ? "+" : "-"}
-                </span>
-                <code>{node.key}</code>
-                <small>{node.inherited ? node.origin : "directo"}</small>
-              </div>
-            ))}
-            {filteredEffective.length > 10 && (
-              <p>+ {filteredEffective.length - 10} más</p>
-            )}
-            {filteredEffective.length === 0 && totalCount > 0 && (
-              <p>Ningún permiso coincide con los filtros activos.</p>
-            )}
-          </div>
+          {renderEffectiveList()}
         </>
       ) : backup && user && userId ? (
         <>
@@ -115,6 +140,7 @@ export function ResolutionPanel({
             onChange={setFilters}
             showOrigin
           />
+          <PermissionGroupingControl value={grouping} onChange={setGrouping} />
           <div className="effective-count">
             <strong>{filteredCount}</strong>
             <span>
@@ -123,23 +149,7 @@ export function ResolutionPanel({
                 : `de ${totalCount} permisos efectivos`}
             </span>
           </div>
-          <div className="effective-list">
-            {filteredEffective.slice(0, 10).map((node) => (
-              <div key={`${node.origin}-${node.key}`}>
-                <span className={node.value ? "value-true" : "value-false"}>
-                  {node.value ? "+" : "-"}
-                </span>
-                <code>{node.key}</code>
-                <small>{node.inherited ? node.origin : "directo"}</small>
-              </div>
-            ))}
-            {filteredEffective.length > 10 && (
-              <p>+ {filteredEffective.length - 10} más</p>
-            )}
-            {filteredEffective.length === 0 && totalCount > 0 && (
-              <p>Ningún permiso coincide con los filtros activos.</p>
-            )}
-          </div>
+          {renderEffectiveList()}
         </>
       ) : (
         <div className="resolution-empty">
