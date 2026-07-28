@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { getEffectiveNodes, getParents } from "./luckperms";
+import {
+  getEffectiveNodes,
+  getParents,
+  isValidPermissionKey,
+  removeDirectPermission,
+  setDirectPermissionValue,
+  upsertGlobalPermission,
+} from "./luckperms";
 import type { LuckPermsBackup } from "./permissions";
 
 const backup: LuckPermsBackup = {
@@ -44,5 +51,54 @@ describe("LuckPerms inheritance resolution", () => {
 
   it("terminates a cyclic inheritance chain", () => {
     expect(getEffectiveNodes(backup, "cyclic")).toEqual([]);
+  });
+});
+
+describe("Direct permission editing", () => {
+  it("adds a global custom permission without changing contextual nodes", () => {
+    const withContext: LuckPermsBackup = {
+      groups: {
+        default: {
+          nodes: [
+            {
+              type: "permission",
+              key: "server.chat",
+              value: false,
+              context: { world: "nether" },
+            },
+          ],
+        },
+      },
+    };
+
+    expect(
+      upsertGlobalPermission(withContext, "default", "server.chat", true),
+    ).toMatchObject({
+      groups: {
+        default: {
+          nodes: [
+            { key: "server.chat", value: false, context: { world: "nether" } },
+            { key: "server.chat", value: true },
+          ],
+        },
+      },
+    });
+  });
+
+  it("edits and removes only the selected direct permission node", () => {
+    const changed = setDirectPermissionValue(backup, "moderator", 2, false);
+    expect(changed.groups.moderator.nodes[2]).toMatchObject({
+      key: "server.mute",
+      value: false,
+    });
+    expect(
+      removeDirectPermission(changed, "moderator", 2).groups.moderator.nodes,
+    ).toHaveLength(2);
+  });
+
+  it("rejects empty keys and keys with whitespace", () => {
+    expect(isValidPermissionKey("plugin.permission")).toBe(true);
+    expect(isValidPermissionKey(" ")).toBe(false);
+    expect(isValidPermissionKey("plugin permission")).toBe(false);
   });
 });

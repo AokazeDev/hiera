@@ -1,12 +1,18 @@
 "use client";
 
 import gsap from "gsap";
-import { Download, FileUp } from "lucide-react";
+import { BookOpen, Download, FilePenLine, FileUp } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { BackupRail } from "@/components/studio/backup-rail";
 import { CatalogPanel } from "@/components/studio/catalog-panel";
+import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
+import {
+  removeDirectPermission,
+  setDirectPermissionValue,
+  upsertGlobalPermission,
+} from "@/lib/luckperms";
 import { authMeReloaded, type LuckPermsBackup } from "@/lib/permissions";
 
 export function Studio() {
@@ -15,6 +21,7 @@ export function Studio() {
   const [backup, setBackup] = useState<LuckPermsBackup | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [history, setHistory] = useState<LuckPermsBackup[]>([]);
+  const [workspace, setWorkspace] = useState<"editor" | "catalog">("editor");
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: no-preference)");
@@ -88,6 +95,23 @@ export function Studio() {
     });
   }
 
+  function addPermission(key: string, value: boolean) {
+    if (!backup || !selectedGroup) return;
+    updateBackup(upsertGlobalPermission(backup, selectedGroup, key, value));
+  }
+
+  function setPermissionValue(nodeIndex: number, value: boolean) {
+    if (!backup || !selectedGroup) return;
+    updateBackup(
+      setDirectPermissionValue(backup, selectedGroup, nodeIndex, value),
+    );
+  }
+
+  function removePermission(nodeIndex: number) {
+    if (!backup || !selectedGroup) return;
+    updateBackup(removeDirectPermission(backup, selectedGroup, nodeIndex));
+  }
+
   function exportBackup() {
     if (!backup) return;
     const blob = new Blob([JSON.stringify(backup, null, 2)], {
@@ -122,6 +146,24 @@ export function Studio() {
           >
             <FileUp size={15} /> Importar backup
           </button>
+          <nav className="workspace-switch" aria-label="Vista principal">
+            <button
+              type="button"
+              className={workspace === "editor" ? "is-active" : ""}
+              aria-pressed={workspace === "editor"}
+              onClick={() => setWorkspace("editor")}
+            >
+              <FilePenLine size={15} /> Editor
+            </button>
+            <button
+              type="button"
+              className={workspace === "catalog" ? "is-active" : ""}
+              aria-pressed={workspace === "catalog"}
+              onClick={() => setWorkspace("catalog")}
+            >
+              <BookOpen size={15} /> Catálogo
+            </button>
+          </nav>
           {backup && (
             <button
               type="button"
@@ -157,12 +199,22 @@ export function Studio() {
           onSelectGroup={setSelectedGroup}
           onImport={() => input.current?.click()}
         />
-        <CatalogPanel
-          catalog={authMeReloaded}
-          canApply={Boolean(backup && selectedGroup)}
-          groupName={selectedGroup}
-          onApply={applyPermissions}
-        />
+        {workspace === "editor" ? (
+          <GroupPermissionEditor
+            backup={backup}
+            groupName={selectedGroup}
+            onAdd={addPermission}
+            onSetValue={setPermissionValue}
+            onRemove={removePermission}
+          />
+        ) : (
+          <CatalogPanel
+            catalog={authMeReloaded}
+            canApply={Boolean(backup && selectedGroup)}
+            groupName={selectedGroup}
+            onApply={applyPermissions}
+          />
+        )}
         <ResolutionPanel
           backup={backup}
           groupName={selectedGroup}

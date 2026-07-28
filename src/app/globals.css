@@ -334,6 +334,28 @@ button {
   display: flex;
   gap: 8px;
 }
+.workspace-switch {
+  display: flex;
+  border: 1px solid #526058;
+}
+.workspace-switch button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  padding: 7px 9px;
+  background: transparent;
+  color: #c3cbc5;
+  font-size: 12px;
+}
+.workspace-switch button + button {
+  border-left: 1px solid #526058;
+}
+.workspace-switch button:hover,
+.workspace-switch button.is-active {
+  background: var(--acid);
+  color: var(--night);
+}
 .text-button,
 .icon-button {
   display: inline-flex;
@@ -481,6 +503,131 @@ button {
   font-size: 12px;
   text-decoration: underline;
   text-underline-offset: 3px;
+}
+.editor-summary,
+.editor-intro {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.editor-summary {
+  margin: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+}
+.editor-intro {
+  max-width: 630px;
+  margin: 20px 0;
+}
+.permission-form {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) 150px auto;
+  gap: 12px;
+  align-items: end;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.permission-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.permission-form input,
+.permission-form select {
+  width: 100%;
+  border: 1px solid #9ea69d;
+  border-radius: 0;
+  background: #f7f5ee;
+  color: var(--ink);
+  padding: 9px;
+  font:
+    12px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.permission-form .primary-action {
+  border: 0;
+}
+.form-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #8f2929;
+  font-size: 12px;
+}
+.direct-permission-list {
+  border-top: 1px solid var(--ink);
+  margin-top: 24px;
+}
+.direct-permission {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid #d4d2c8;
+}
+.direct-permission > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.direct-permission code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font:
+    12px var(--font-geist-mono),
+    monospace;
+}
+.direct-permission small {
+  color: var(--muted);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+}
+.permission-actions {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+.permission-state,
+.remove-permission {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border: 1px solid #9ea69d;
+  background: transparent;
+  color: var(--muted);
+  padding: 5px 6px;
+  font-size: 10px;
+}
+.permission-state.is-granted {
+  border-color: #6d7e1f;
+  background: #dce9a7;
+  color: #40520a;
+}
+.permission-state.is-denied {
+  border-color: #a76868;
+  background: #f0dede;
+  color: #7a2525;
+}
+.remove-permission:hover {
+  border-color: #a76868;
+  color: #7a2525;
+}
+.editor-empty {
+  margin: 0;
+  padding: 24px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
 }
 .catalog-meta {
   display: flex;
@@ -755,6 +902,10 @@ button {
   .studio-header > div {
     margin-left: auto;
   }
+  .workspace-switch button {
+    padding: 6px;
+    font-size: 0;
+  }
   .studio-header .text-button {
     padding: 6px;
     font-size: 0;
@@ -775,6 +926,24 @@ button {
   }
   .workspace {
     padding: 20px;
+  }
+  .permission-form {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .permission-form .primary-action {
+    min-height: 38px;
+  }
+  .direct-permission {
+    align-items: start;
+    flex-direction: column;
+  }
+  .permission-actions {
+    width: 100%;
+  }
+  .permission-state {
+    flex: 1;
+    justify-content: center;
   }
   .catalog-controls,
   .workspace-title {
