@@ -159,6 +159,126 @@
   color: var(--muted);
   font-size: 11px;
 }
+.comparison-empty-state {
+  display: grid;
+  gap: 12px;
+  place-items: start;
+  padding: 30px 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.comparison-empty-state p,
+.comparison-empty {
+  margin: 0;
+}
+.comparison-selectors {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 12px;
+  margin: 24px 0 30px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 14px 0;
+  color: var(--muted);
+}
+.comparison-selectors label {
+  display: grid;
+  gap: 6px;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.comparison-selectors select {
+  min-width: 0;
+  border: 1px solid #9ea69d;
+  border-radius: 0;
+  background: #f7f5ee;
+  color: var(--ink);
+  padding: 8px;
+  font:
+    12px var(--font-geist-mono),
+    monospace;
+  text-transform: none;
+}
+.comparison-selectors > svg {
+  margin-bottom: 9px;
+  color: #526b10;
+}
+.comparison-sections {
+  display: grid;
+  gap: 30px;
+}
+.comparison-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--ink);
+  padding-bottom: 8px;
+}
+.comparison-heading h3,
+.comparison-heading span {
+  margin: 0;
+  font:
+    11px var(--font-geist-mono),
+    monospace;
+}
+.comparison-heading span {
+  color: var(--muted);
+}
+.comparison-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.comparison-list li {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(280px, 1.2fr);
+  gap: 16px;
+  border-bottom: 1px solid #cfcec3;
+  padding: 12px 0;
+}
+.comparison-list li > div:first-child {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+}
+.comparison-list code {
+  overflow-wrap: anywhere;
+  font-size: 11px;
+}
+.comparison-list small {
+  color: var(--muted);
+  font:
+    10px / 1.35 var(--font-geist-mono),
+    monospace;
+}
+.comparison-values {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.comparison-values > span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+.comparison-values strong {
+  overflow: hidden;
+  color: var(--muted);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comparison-values b {
+  font-size: 11px;
+}
 .edit-history {
   margin-top: 28px;
   border-top: 1px solid var(--line);

@@ -22,6 +22,10 @@
   .permission-row {
     grid-template-columns: 16px minmax(155px, 0.8fr) minmax(200px, 1.2fr);
   }
+  .comparison-list li {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
   .permission-audiences {
     grid-column: 2 / -1;
   }
@@ -125,6 +129,13 @@
   .workspace-title {
     align-items: start;
     flex-direction: column;
+  }
+  .comparison-selectors {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .comparison-selectors > svg {
+    display: none;
   }
   .catalog-controls input {
     width: 100%;

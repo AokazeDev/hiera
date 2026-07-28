@@ -1,11 +1,18 @@
 "use client";
 
 import gsap from "gsap";
-import { BookOpen, Download, FilePenLine, FileUp } from "lucide-react";
+import {
+  BookOpen,
+  Download,
+  FilePenLine,
+  FileUp,
+  GitCompareArrows,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { BackupRail } from "@/components/studio/backup-rail";
 import { CatalogPanel } from "@/components/studio/catalog-panel";
+import { GroupComparison } from "@/components/studio/group-comparison";
 import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
 import { UserMembershipEditor } from "@/components/studio/user-membership-editor";
@@ -42,7 +49,9 @@ export function Studio() {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [history, setHistory] = useState(emptyBackupHistory);
-  const [workspace, setWorkspace] = useState<"editor" | "catalog">("editor");
+  const [workspace, setWorkspace] = useState<
+    "editor" | "catalog" | "comparison"
+  >("editor");
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: no-preference)");
@@ -301,6 +310,14 @@ export function Studio() {
             >
               <BookOpen size={15} /> Catálogo
             </button>
+            <button
+              type="button"
+              className={workspace === "comparison" ? "is-active" : ""}
+              aria-pressed={workspace === "comparison"}
+              onClick={() => setWorkspace("comparison")}
+            >
+              <GitCompareArrows size={15} /> Comparar
+            </button>
           </nav>
           {backup && (
             <button
@@ -348,7 +365,9 @@ export function Studio() {
           onRenameGroup={renameSelectedGroup}
           onDeleteGroup={deleteSelectedGroup}
         />
-        {workspace === "editor" && selectedUser ? (
+        {workspace === "comparison" ? (
+          <GroupComparison backup={backup} initialGroup={selectedGroup} />
+        ) : workspace === "editor" && selectedUser ? (
           <UserMembershipEditor
             backup={backup}
             userId={selectedUser}

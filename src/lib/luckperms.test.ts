@@ -3,6 +3,7 @@ import {
   addGroupInheritance,
   addUserMembership,
   applyPermissionBatch,
+  compareGroups,
   createGroup,
   deleteGroup,
   diagnoseBackup,
@@ -261,6 +262,83 @@ describe("Direct permission editing", () => {
     expect(isValidPermissionKey("plugin.permission")).toBe(true);
     expect(isValidPermissionKey(" ")).toBe(false);
     expect(isValidPermissionKey("plugin permission")).toBe(false);
+  });
+});
+
+describe("Group comparison", () => {
+  it("separates direct and effective differences while preserving origin", () => {
+    const comparison = compareGroups(
+      {
+        groups: {
+          base: {
+            nodes: [
+              { type: "permission", key: "server.chat", value: true },
+              { type: "permission", key: "server.fly", value: true },
+            ],
+          },
+          left: {
+            nodes: [
+              { type: "inheritance", key: "group.base", value: true },
+              { type: "permission", key: "server.mute", value: true },
+              {
+                type: "permission",
+                key: "server.home",
+                value: true,
+                context: { world: "nether" },
+              },
+            ],
+          },
+          right: {
+            nodes: [
+              { type: "permission", key: "server.mute", value: false },
+              { type: "permission", key: "server.home", value: true },
+            ],
+          },
+        },
+      },
+      "left",
+      "right",
+    );
+
+    expect(comparison.direct).toEqual([
+      {
+        key: "server.home",
+        context: [["world", "nether"]],
+        left: {
+          type: "permission",
+          key: "server.home",
+          value: true,
+          context: { world: "nether" },
+        },
+        right: undefined,
+      },
+      {
+        key: "server.home",
+        context: [],
+        left: undefined,
+        right: { type: "permission", key: "server.home", value: true },
+      },
+      {
+        key: "server.mute",
+        context: [],
+        left: { type: "permission", key: "server.mute", value: true },
+        right: { type: "permission", key: "server.mute", value: false },
+      },
+    ]);
+    expect(comparison.effective).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "server.chat",
+          left: expect.objectContaining({ origin: "base", inherited: true }),
+          right: undefined,
+        }),
+        expect.objectContaining({
+          key: "server.mute",
+          left: expect.objectContaining({ origin: "left", inherited: false }),
+          right: expect.objectContaining({ origin: "right", inherited: false }),
+        }),
+      ]),
+    );
   });
 });
 
