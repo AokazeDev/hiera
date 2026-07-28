@@ -1,0 +1,119 @@
+.catalog-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin: 20px 0;
+  color: var(--muted);
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+}
+.catalog-controls {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 0;
+}
+.catalog-controls label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+}
+.catalog-controls input {
+  width: 230px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+}
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.filter-row button {
+  border: 0;
+  padding: 5px 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+}
+.filter-row button:hover,
+.filter-row .filter-active {
+  background: var(--night);
+  color: var(--paper);
+}
+.permission-table {
+  max-height: 500px;
+  overflow: auto;
+}
+.permission-row {
+  display: grid;
+  grid-template-columns: 16px minmax(170px, 0.9fr) minmax(260px, 1.45fr) 130px;
+  gap: 10px;
+  align-items: start;
+  border-bottom: 1px solid #d4d2c8;
+  padding: 12px 3px;
+  font-size: 12px;
+}
+.permission-row:hover {
+  background: #e9efcf;
+}
+.permission-row input {
+  margin: 2px 0 0;
+  accent-color: #718a11;
+}
+.permission-node {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 11px;
+}
+.permission-description {
+  color: var(--muted);
+  line-height: 1.45;
+}
+.permission-audiences {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.permission-audiences i {
+  font:
+    9px var(--font-geist-mono),
+    monospace;
+  font-style: normal;
+  padding: 2px 4px;
+  background: #e0dfd5;
+}
+.audience-admin {
+  color: #6c3c25;
+}
+.audience-player {
+  color: #386066;
+}
+.audience-group {
+  color: #506b10;
+}
+.audience-sensitive {
+  color: #952d2d;
+}
+.selection-dock {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 0 0;
+  background: #f1efe8;
+  color: var(--muted);
+  font:
+    11px var(--font-geist-mono),
+    monospace;
+}
+.selection-dock .primary-action {
+  border: 0;
+}

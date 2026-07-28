@@ -16,11 +16,14 @@ import {
   deleteGroup,
   removeDirectPermission,
   removeGroupInheritance,
+  removeUserDirectPermission,
   removeUserMembership,
   renameGroup,
   setDirectPermissionValue,
+  setUserDirectPermissionValue,
   setUserPrimaryGroup,
   upsertGlobalPermission,
+  upsertUserGlobalPermission,
 } from "@/lib/luckperms";
 import { authMeReloaded, type LuckPermsBackup } from "@/lib/permissions";
 
@@ -146,6 +149,23 @@ export function Studio() {
   function changePrimaryGroup(groupName: string | null) {
     if (!backup || !selectedUser) return;
     updateBackup(setUserPrimaryGroup(backup, selectedUser, groupName));
+  }
+
+  function addUserPermission(key: string, value: boolean) {
+    if (!backup || !selectedUser) return;
+    updateBackup(upsertUserGlobalPermission(backup, selectedUser, key, value));
+  }
+
+  function setUserPermissionValue(nodeIndex: number, value: boolean) {
+    if (!backup || !selectedUser) return;
+    updateBackup(
+      setUserDirectPermissionValue(backup, selectedUser, nodeIndex, value),
+    );
+  }
+
+  function removeUserPermission(nodeIndex: number) {
+    if (!backup || !selectedUser) return;
+    updateBackup(removeUserDirectPermission(backup, selectedUser, nodeIndex));
   }
 
   function createNewGroup(groupName: string) {
@@ -277,6 +297,9 @@ export function Studio() {
             onAddMembership={addMembership}
             onRemoveMembership={removeMembership}
             onSetPrimaryGroup={changePrimaryGroup}
+            onAddPermission={addUserPermission}
+            onSetPermissionValue={setUserPermissionValue}
+            onRemovePermission={removeUserPermission}
           />
         ) : workspace === "editor" ? (
           <GroupPermissionEditor
@@ -297,6 +320,7 @@ export function Studio() {
         <ResolutionPanel
           backup={backup}
           groupName={selectedGroup}
+          userId={selectedUser}
           canUndo={history.length > 0}
           onUndo={undo}
           onSelectGroup={setSelectedGroup}

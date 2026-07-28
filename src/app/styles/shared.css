@@ -1,0 +1,58 @@
+.site-nav,
+.studio-header {
+  min-height: 68px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 4vw;
+  border-bottom: 1px solid var(--line);
+}
+
+.wordmark {
+  font:
+    800 19px / 1 var(--font-geist-mono),
+    monospace;
+  letter-spacing: -0.12em;
+}
+
+.wordmark span {
+  color: #73881c;
+}
+
+.nav-links {
+  display: flex;
+  gap: 24px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.nav-links a:hover {
+  color: var(--ink);
+}
+
+.nav-action,
+.primary-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: var(--night);
+  color: var(--paper);
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.nav-action {
+  padding: 8px 11px;
+}
+
+.primary-action:hover {
+  background: #35423d;
+}
+
+.primary-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}

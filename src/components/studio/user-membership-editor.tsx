@@ -1,7 +1,8 @@
 "use client";
 
-import { Plus, Trash2, UserRound } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
 import { getUserMemberships, validateUserMembership } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
@@ -11,6 +12,9 @@ type UserMembershipEditorProps = {
   onAddMembership: (groupName: string) => void;
   onRemoveMembership: (nodeIndex: number) => void;
   onSetPrimaryGroup: (groupName: string | null) => void;
+  onAddPermission: (key: string, value: boolean) => void;
+  onSetPermissionValue: (nodeIndex: number, value: boolean) => void;
+  onRemovePermission: (nodeIndex: number) => void;
 };
 
 export function UserMembershipEditor({
@@ -19,6 +23,9 @@ export function UserMembershipEditor({
   onAddMembership,
   onRemoveMembership,
   onSetPrimaryGroup,
+  onAddPermission,
+  onSetPermissionValue,
+  onRemovePermission,
 }: UserMembershipEditorProps) {
   const [groupName, setGroupName] = useState("");
   const user = backup && userId ? backup.users?.[userId] : null;
@@ -168,10 +175,25 @@ export function UserMembershipEditor({
           )}
         </form>
       </section>
-      <p className="user-direct-node-note">
-        <UserRound size={14} aria-hidden="true" /> La edición de permisos
-        directos de usuario llegará en el siguiente bloque del editor.
-      </p>
+      <section
+        className="user-direct-permissions"
+        aria-labelledby="user-direct-permissions-title"
+      >
+        <p className="inheritance-label" id="user-direct-permissions-title">
+          PERMISOS DIRECTOS
+        </p>
+        <p className="editor-intro">
+          Estos nodos prevalecen sobre los permisos recibidos mediante los
+          grupos asignados. Los contextos existentes se conservan al editar.
+        </p>
+        <PermissionNodeEditor
+          nodes={user.nodes}
+          subjectLabel={`El usuario ${displayName}`}
+          onAdd={onAddPermission}
+          onSetValue={onSetPermissionValue}
+          onRemove={onRemovePermission}
+        />
+      </section>
     </section>
   );
 }

@@ -1,11 +1,12 @@
-import { Info, ShieldAlert, Undo2 } from "lucide-react";
+import { Info, ShieldAlert, Undo2, UserRound } from "lucide-react";
 import { GroupInheritanceEditor } from "@/components/studio/group-inheritance-editor";
-import { getEffectiveNodes } from "@/lib/luckperms";
+import { getEffectiveNodes, getEffectiveUserNodes } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
 type ResolutionPanelProps = {
   backup: LuckPermsBackup | null;
   groupName: string | null;
+  userId: string | null;
   canUndo: boolean;
   onUndo: () => void;
   onSelectGroup: (group: string) => void;
@@ -16,6 +17,7 @@ type ResolutionPanelProps = {
 export function ResolutionPanel({
   backup,
   groupName,
+  userId,
   canUndo,
   onUndo,
   onSelectGroup,
@@ -25,6 +27,11 @@ export function ResolutionPanel({
   const group = backup && groupName ? backup.groups[groupName] : null;
   const effective =
     backup && groupName ? getEffectiveNodes(backup, groupName) : [];
+  const user = backup && userId ? backup.users?.[userId] : null;
+  const userEffective =
+    backup && userId ? getEffectiveUserNodes(backup, userId) : [];
+  const selectedName = groupName ?? user?.username ?? userId;
+  const selectedEffective = groupName ? effective : userEffective;
   return (
     <aside className="resolution-panel">
       <div className="rail-heading">
@@ -65,10 +72,35 @@ export function ResolutionPanel({
                   {node.value ? "+" : "-"}
                 </span>
                 <code>{node.key}</code>
-                {node.inherited && <small>{node.origin}</small>}
+                <small>{node.inherited ? node.origin : "directo"}</small>
               </div>
             ))}
             {effective.length > 10 && <p>+ {effective.length - 10} más</p>}
+          </div>
+        </>
+      ) : backup && user && userId ? (
+        <>
+          <div className="selected-group">
+            <UserRound size={16} aria-hidden="true" />
+            {selectedName}
+          </div>
+          <div className="effective-count">
+            <strong>{selectedEffective.length}</strong>
+            <span>permisos efectivos</span>
+          </div>
+          <div className="effective-list">
+            {selectedEffective.slice(0, 10).map((node) => (
+              <div key={`${node.origin}-${node.key}`}>
+                <span className={node.value ? "value-true" : "value-false"}>
+                  {node.value ? "+" : "-"}
+                </span>
+                <code>{node.key}</code>
+                <small>{node.inherited ? node.origin : "directo"}</small>
+              </div>
+            ))}
+            {selectedEffective.length > 10 && (
+              <p>+ {selectedEffective.length - 10} más</p>
+            )}
           </div>
         </>
       ) : (

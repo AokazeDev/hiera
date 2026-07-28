@@ -1,0 +1,152 @@
+@media (max-width: 1000px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .permission-atlas {
+    min-height: 430px;
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+  .principle-rail {
+    grid-template-columns: 1fr 1fr;
+  }
+  .workflow {
+    grid-template-columns: 1fr;
+  }
+  .studio-grid {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+  .resolution-panel {
+    display: none;
+  }
+  .permission-row {
+    grid-template-columns: 16px minmax(155px, 0.8fr) minmax(200px, 1.2fr);
+  }
+  .permission-audiences {
+    grid-column: 2 / -1;
+  }
+}
+
+@media (max-width: 680px) {
+  .site-nav {
+    padding: 0 20px;
+  }
+  .nav-links,
+  .nav-action {
+    display: none;
+  }
+  .hero-copy,
+  .manifesto,
+  .workflow,
+  .closing {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .principle-rail {
+    grid-template-columns: 1fr;
+    margin-top: 50px;
+  }
+  .principle-rail article,
+  .principle-rail article + article {
+    min-height: 0;
+    padding: 22px 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .studio-header {
+    padding: 10px 15px;
+  }
+  .studio-header > p {
+    display: none;
+  }
+  .studio-header > div {
+    margin-left: auto;
+  }
+  .workspace-switch button,
+  .studio-header .text-button {
+    padding: 6px;
+    font-size: 0;
+  }
+  .studio-grid {
+    display: block;
+  }
+  .group-rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .group-list {
+    display: flex;
+    overflow: auto;
+  }
+  .group-row {
+    min-width: 130px;
+  }
+  .workspace {
+    padding: 20px;
+  }
+  .permission-form {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .user-primary-group {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .user-primary-group select {
+    width: 100%;
+  }
+  .permission-form .primary-action {
+    min-height: 38px;
+  }
+  .direct-permission {
+    align-items: start;
+    flex-direction: column;
+  }
+  .permission-actions {
+    width: 100%;
+  }
+  .permission-state {
+    flex: 1;
+    justify-content: center;
+  }
+  .catalog-controls,
+  .workspace-title {
+    align-items: start;
+    flex-direction: column;
+  }
+  .catalog-controls input {
+    width: 100%;
+  }
+  .permission-row {
+    grid-template-columns: 16px 1fr;
+  }
+  .permission-description,
+  .permission-audiences {
+    grid-column: 2;
+  }
+  .permission-table {
+    max-height: none;
+  }
+  .permission-atlas {
+    padding: 14px;
+  }
+  .atlas-footer {
+    font-size: 8px;
+  }
+  .hero h1 {
+    font-size: 52px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+    transition-duration: 0.01ms;
+  }
+}

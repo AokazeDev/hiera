@@ -5,17 +5,21 @@ import {
   createGroup,
   deleteGroup,
   getEffectiveNodes,
+  getEffectiveUserNodes,
   getGroupReferences,
   getParents,
   getUserMemberships,
   isValidPermissionKey,
   removeDirectPermission,
   removeGroupInheritance,
+  removeUserDirectPermission,
   removeUserMembership,
   renameGroup,
   setDirectPermissionValue,
+  setUserDirectPermissionValue,
   setUserPrimaryGroup,
   upsertGlobalPermission,
+  upsertUserGlobalPermission,
   validateGroupDeletion,
   validateGroupInheritance,
   validateNewGroupName,
@@ -209,6 +213,16 @@ describe("Group lifecycle editing", () => {
 describe("User membership editing", () => {
   const withUser: LuckPermsBackup = {
     ...backup,
+    groups: {
+      ...backup.groups,
+      moderator: {
+        ...backup.groups.moderator,
+        nodes: [
+          ...backup.groups.moderator.nodes,
+          { type: "permission", key: "server.kick", value: true },
+        ],
+      },
+    },
     users: {
       "a-user-id": {
         username: "Aokaze",
@@ -263,5 +277,106 @@ describe("User membership editing", () => {
       setUserPrimaryGroup(changed, "a-user-id", null).users?.["a-user-id"]
         .primaryGroup,
     ).toBeUndefined();
+  });
+});
+
+describe("User direct permission editing and resolution", () => {
+  const withUser: LuckPermsBackup = {
+    ...backup,
+    groups: {
+      ...backup.groups,
+      moderator: {
+        ...backup.groups.moderator,
+        nodes: [
+          ...backup.groups.moderator.nodes,
+          { type: "permission", key: "server.kick", value: true },
+        ],
+      },
+    },
+    users: {
+      "a-user-id": {
+        username: "Aokaze",
+        nodes: [
+          { type: "inheritance", key: "group.moderator", value: true },
+          {
+            type: "permission",
+            key: "server.mute",
+            value: false,
+            context: { server: "lobby" },
+          },
+        ],
+      },
+    },
+  };
+
+  it("adds a global direct node without replacing a contextual user node", () => {
+    const changed = upsertUserGlobalPermission(
+      withUser,
+      "a-user-id",
+      "server.mute",
+      true,
+    );
+
+    expect(changed.users?.["a-user-id"].nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "server.mute",
+          value: false,
+          context: { server: "lobby" },
+        }),
+        expect.objectContaining({ key: "server.mute", value: true }),
+      ]),
+    );
+  });
+
+  it("edits and removes only the selected user permission node", () => {
+    const changed = setUserDirectPermissionValue(
+      withUser,
+      "a-user-id",
+      1,
+      true,
+    );
+
+    expect(changed.users?.["a-user-id"].nodes[1]).toMatchObject({
+      key: "server.mute",
+      value: true,
+      context: { server: "lobby" },
+    });
+    expect(
+      removeUserDirectPermission(changed, "a-user-id", 1).users?.["a-user-id"]
+        .nodes,
+    ).toHaveLength(1);
+  });
+
+  it("keeps a direct user permission over an assigned group's effective node", () => {
+    const changed = upsertUserGlobalPermission(
+      withUser,
+      "a-user-id",
+      "server.chat",
+      false,
+    );
+
+    expect(getEffectiveUserNodes(changed, "a-user-id")).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "server.chat",
+          value: false,
+          origin: "Aokaze",
+          inherited: false,
+        }),
+        expect.objectContaining({
+          key: "server.mute",
+          value: false,
+          origin: "Aokaze",
+          inherited: false,
+        }),
+        expect.objectContaining({
+          key: "server.kick",
+          value: true,
+          origin: "moderator",
+          inherited: true,
+        }),
+      ]),
+    );
   });
 });

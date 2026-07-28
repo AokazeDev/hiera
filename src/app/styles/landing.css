@@ -1,0 +1,253 @@
+.hero {
+  min-height: calc(100svh - 69px);
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(480px, 1.1fr);
+  border-bottom: 1px solid var(--line);
+}
+
+.hero-copy {
+  padding: clamp(64px, 12vw, 160px) 5vw 70px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.eyebrow {
+  font:
+    700 10px / 1.2 var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.15em;
+  color: #6d7e1f;
+  margin: 0 0 20px;
+}
+
+.hero h1 {
+  max-width: 650px;
+  font-size: clamp(48px, 6.2vw, 92px);
+  line-height: 0.96;
+  letter-spacing: -0.075em;
+  margin: 0;
+}
+
+.hero h1 em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+
+.hero-lede {
+  max-width: 520px;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.55;
+  margin: 32px 0;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+}
+
+.quiet-action {
+  border-bottom: 1px solid currentColor;
+  font-size: 13px;
+}
+
+.permission-atlas {
+  min-height: 600px;
+  overflow: hidden;
+  background-color: #dde4c7;
+  background-image: radial-gradient(#84906a 1px, transparent 1px);
+  background-size: 12px 12px;
+  border-left: 1px solid var(--line);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.atlas-topline,
+.atlas-footer {
+  display: flex;
+  justify-content: space-between;
+  color: #526048;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.08em;
+}
+
+.permission-atlas svg {
+  width: 100%;
+  max-height: 390px;
+  margin: auto 0;
+}
+
+.graph-line {
+  stroke: #73881c;
+  stroke-width: 1.5;
+  fill: none;
+  stroke-dasharray: 3 4;
+}
+
+.graph-token rect {
+  fill: #eff2e6;
+  stroke: #526048;
+  stroke-width: 1.2;
+}
+
+.graph-token text {
+  fill: #17211e;
+  font:
+    600 15px var(--font-geist-mono),
+    monospace;
+  text-anchor: middle;
+}
+
+.graph-admin rect {
+  fill: #d5e887;
+}
+
+.atlas-footer {
+  gap: 10px;
+  align-items: center;
+}
+
+.atlas-footer strong {
+  color: var(--ink);
+}
+
+.signal {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 4px;
+}
+
+.direct {
+  background: #718a11;
+}
+
+.inherited {
+  border: 1px solid #718a11;
+}
+
+.manifesto {
+  padding: clamp(75px, 12vw, 180px) 5vw 0;
+}
+
+.manifesto-copy {
+  max-width: 1100px;
+  font-size: clamp(30px, 4vw, 58px);
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+  margin: 0;
+}
+
+.principle-rail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 92px;
+  border-top: 1px solid var(--line);
+}
+
+.principle-rail article {
+  min-height: 230px;
+  padding: 24px 24px 30px 0;
+  border-right: 1px solid var(--line);
+}
+
+.principle-rail article + article {
+  padding-left: 24px;
+}
+
+.principle-rail svg {
+  color: #6d7e1f;
+}
+
+.principle-rail h2 {
+  margin: 34px 0 10px;
+  font-size: 15px;
+}
+
+.principle-rail p,
+.workflow-intro > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.workflow {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 10vw;
+  padding: 140px 5vw;
+  border-bottom: 1px solid var(--line);
+}
+
+.workflow h2,
+.closing h2 {
+  font-size: clamp(34px, 4.2vw, 62px);
+  line-height: 1;
+  letter-spacing: -0.06em;
+  margin: 0 0 24px;
+}
+
+.steps {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--ink);
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 65px 1fr;
+  gap: 16px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.steps li > span {
+  font:
+    12px var(--font-geist-mono),
+    monospace;
+  color: #6d7e1f;
+}
+
+.steps h3 {
+  font-size: 16px;
+  margin: 0 0 7px;
+}
+
+.steps code {
+  color: var(--muted);
+  font:
+    12px / 1.5 var(--font-geist-mono),
+    monospace;
+}
+
+.closing {
+  background: var(--night);
+  color: var(--paper);
+  padding: 140px 5vw;
+}
+
+.closing .eyebrow {
+  color: var(--acid);
+}
+
+.closing p:not(.eyebrow) {
+  max-width: 520px;
+  margin: 0 0 30px;
+  color: #bac2bc;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.closing .primary-action {
+  background: var(--acid);
+  color: var(--night);
+}
