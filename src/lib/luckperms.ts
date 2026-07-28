@@ -1,3 +1,4 @@
+export * from "./luckperms/backup-diagnostics";
 export * from "./luckperms/direct-permissions";
 export * from "./luckperms/effective-resolution";
 export * from "./luckperms/group-lifecycle";

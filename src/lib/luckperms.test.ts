@@ -4,6 +4,7 @@ import {
   addUserMembership,
   createGroup,
   deleteGroup,
+  diagnoseBackup,
   getEffectiveNodes,
   getEffectiveUserNodes,
   getGroupReferences,
@@ -69,6 +70,65 @@ describe("LuckPerms inheritance resolution", () => {
 
   it("terminates a cyclic inheritance chain", () => {
     expect(getEffectiveNodes(backup, "cyclic")).toEqual([]);
+  });
+});
+
+describe("Backup diagnostics", () => {
+  it("finds duplicate permissions, missing group references, and inherited cycles", () => {
+    const diagnostics = diagnoseBackup({
+      groups: {
+        default: {
+          nodes: [
+            { type: "permission", key: "server.chat", value: true },
+            { type: "permission", key: "server.chat", value: false },
+            { type: "inheritance", key: "group.missing", value: true },
+            { type: "inheritance", key: "group.staff", value: true },
+          ],
+        },
+        staff: {
+          nodes: [{ type: "inheritance", key: "group.default", value: true }],
+        },
+      },
+      users: {
+        user: {
+          primaryGroup: "absent",
+          nodes: [{ type: "inheritance", key: "group.unknown", value: true }],
+        },
+      },
+    });
+
+    expect(diagnostics.duplicatePermissions).toEqual([
+      {
+        owner: "group",
+        ownerId: "default",
+        key: "server.chat",
+        nodeIndexes: [0, 1],
+      },
+    ]);
+    expect(diagnostics.missingGroupReferences).toHaveLength(3);
+    expect(diagnostics.inheritanceCycles).toEqual([
+      { groups: ["default", "staff", "default"] },
+    ]);
+  });
+
+  it("does not treat contextual permissions as duplicates of global permissions", () => {
+    const diagnostics = diagnoseBackup({
+      groups: {
+        default: {
+          nodes: [
+            { type: "permission", key: "server.chat", value: true },
+            {
+              type: "permission",
+              key: "server.chat",
+              value: false,
+              context: { world: "nether" },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(diagnostics.duplicatePermissions).toEqual([]);
   });
 });
 

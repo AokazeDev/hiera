@@ -108,6 +108,37 @@
 .group-list {
   margin: 17px -8px;
 }
+.backup-diagnostics {
+  margin: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  color: #7a2525;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.backup-diagnostics summary,
+.backup-diagnostics.is-clear {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 0;
+  cursor: pointer;
+}
+.backup-diagnostics.is-clear {
+  color: #4f7004;
+}
+.backup-diagnostics ul {
+  display: grid;
+  gap: 7px;
+  margin: 0 0 10px;
+  padding-left: 17px;
+}
+.backup-diagnostics code {
+  overflow-wrap: anywhere;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+}
 .group-row {
   width: 100%;
   display: grid;

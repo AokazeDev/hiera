@@ -1,4 +1,5 @@
 import { FileUp, UserRound, Users } from "lucide-react";
+import { BackupDiagnostics } from "@/components/studio/backup-diagnostics";
 import { GroupManager } from "@/components/studio/group-manager";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
@@ -56,6 +57,7 @@ export function BackupRail({
               </button>
             ))}
           </div>
+          <BackupDiagnostics backup={backup} />
           <GroupManager
             backup={backup}
             groupName={selectedGroup}
