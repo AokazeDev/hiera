@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addGroupInheritance,
   addUserMembership,
+  applyPermissionBatch,
   createGroup,
   deleteGroup,
   diagnoseBackup,
@@ -13,6 +14,7 @@ import {
   getUserMemberships,
   inspectNodes,
   isValidPermissionKey,
+  previewPermissionBatch,
   recordBackupChange,
   redoBackupChange,
   removeDirectPermission,
@@ -344,6 +346,82 @@ describe("Group permission transfers", () => {
     expect(
       transferGroupPermission(withDuplicate, "source", 0, "target", "copy"),
     ).toBe(withDuplicate);
+  });
+});
+
+describe("Permission batch application", () => {
+  const batchBackup: LuckPermsBackup = {
+    groups: {
+      default: {
+        nodes: [
+          { type: "permission", key: "authme.player.login", value: true },
+          {
+            type: "permission",
+            key: "authme.player.register",
+            value: false,
+            context: { world: "nether" },
+          },
+          { type: "permission", key: "authme.player.logout", value: false },
+        ],
+      },
+      member: { nodes: [] },
+    },
+  };
+
+  it("previews additions per group without treating contextual nodes as global duplicates", () => {
+    expect(
+      previewPermissionBatch(
+        batchBackup,
+        ["default", "member"],
+        [
+          "authme.player.login",
+          "authme.player.register",
+          "authme.player.logout",
+        ],
+      ),
+    ).toMatchObject({
+      additionCount: 4,
+      targets: [
+        {
+          groupName: "default",
+          additions: ["authme.player.register"],
+          alreadyPresent: ["authme.player.login", "authme.player.logout"],
+        },
+        {
+          groupName: "member",
+          additions: [
+            "authme.player.login",
+            "authme.player.register",
+            "authme.player.logout",
+          ],
+        },
+      ],
+    });
+  });
+
+  it("applies one selection to multiple groups without changing existing nodes", () => {
+    const changed = applyPermissionBatch(
+      batchBackup,
+      ["default", "member"],
+      ["authme.player.login", "authme.player.register", "authme.player.logout"],
+    );
+
+    expect(changed.groups.default.nodes).toEqual([
+      { type: "permission", key: "authme.player.login", value: true },
+      {
+        type: "permission",
+        key: "authme.player.register",
+        value: false,
+        context: { world: "nether" },
+      },
+      { type: "permission", key: "authme.player.logout", value: false },
+      { type: "permission", key: "authme.player.register", value: true },
+    ]);
+    expect(changed.groups.member.nodes).toEqual([
+      { type: "permission", key: "authme.player.login", value: true },
+      { type: "permission", key: "authme.player.register", value: true },
+      { type: "permission", key: "authme.player.logout", value: true },
+    ]);
   });
 });
 

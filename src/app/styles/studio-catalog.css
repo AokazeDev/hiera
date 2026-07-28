@@ -117,3 +117,51 @@
 .selection-dock .primary-action {
   border: 0;
 }
+.batch-targets {
+  margin: 20px 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  padding: 12px 0 0;
+}
+.batch-targets legend {
+  padding: 0;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 600;
+}
+.batch-targets > p {
+  margin: 5px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.batch-targets > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.batch-targets label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font:
+    11px var(--font-geist-mono),
+    monospace;
+}
+.batch-targets input {
+  accent-color: #718a11;
+}
+.batch-preview {
+  display: grid;
+  gap: 5px;
+  margin: 12px 0 0;
+  border-left: 2px solid #718a11;
+  padding: 2px 0 2px 10px;
+  color: var(--muted);
+  font:
+    10px / 1.45 var(--font-geist-mono),
+    monospace;
+}
+.batch-preview strong {
+  color: var(--ink);
+}

@@ -1,8 +1,13 @@
 "use client";
 
 import { Search, Sparkles } from "lucide-react";
-import { useState } from "react";
-import type { PermissionAudience, PermissionCatalog } from "@/lib/permissions";
+import { useEffect, useState } from "react";
+import { previewPermissionBatch } from "@/lib/luckperms";
+import type {
+  LuckPermsBackup,
+  PermissionAudience,
+  PermissionCatalog,
+} from "@/lib/permissions";
 
 const audiences: Array<[PermissionAudience, string]> = [
   ["admin", "Administración"],
@@ -18,21 +23,25 @@ const labels: Record<PermissionAudience, string> = {
 };
 
 type CatalogPanelProps = {
+  backup: LuckPermsBackup | null;
   catalog: PermissionCatalog;
   groupName: string | null;
-  canApply: boolean;
-  onApply: (nodes: string[]) => void;
+  onApply: (nodes: string[], groupNames: string[]) => void;
 };
 
 export function CatalogPanel({
+  backup,
   catalog,
   groupName,
-  canApply,
   onApply,
 }: CatalogPanelProps) {
   const [query, setQuery] = useState("");
   const [audience, setAudience] = useState<PermissionAudience | "all">("all");
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
+  const [targetGroups, setTargetGroups] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    setTargetGroups(groupName ? new Set([groupName]) : new Set());
+  }, [groupName]);
   const permissions = catalog.permissions.filter(
     (permission) =>
       `${permission.node} ${permission.description}`
@@ -48,8 +57,19 @@ export function CatalogPanel({
       return next;
     });
   }
+  function toggleTarget(group: string) {
+    setTargetGroups((current) => {
+      const next = new Set(current);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  }
+  const preview = backup
+    ? previewPermissionBatch(backup, [...targetGroups], [...selectedNodes])
+    : null;
   function apply() {
-    onApply([...selectedNodes]);
+    onApply([...selectedNodes], [...targetGroups]);
     setSelectedNodes(new Set());
   }
   return (
@@ -57,11 +77,7 @@ export function CatalogPanel({
       <div className="workspace-title">
         <div>
           <p className="eyebrow">CATALOGO / {catalog.name.toUpperCase()}</p>
-          <h2>
-            {groupName
-              ? `Aplicar a ${groupName}`
-              : "Construye una plantilla con criterio"}
-          </h2>
+          <h2>Construye una plantilla con criterio</h2>
         </div>
         <a href={catalog.website} target="_blank" rel="noreferrer">
           Plugin y descargas
@@ -119,12 +135,48 @@ export function CatalogPanel({
           </label>
         ))}
       </div>
+      {backup && (
+        <fieldset className="batch-targets">
+          <legend>Grupos de destino</legend>
+          <p>Elige dónde se concederá esta selección.</p>
+          <div>
+            {Object.keys(backup.groups).map((group) => (
+              <label key={group}>
+                <input
+                  type="checkbox"
+                  checked={targetGroups.has(group)}
+                  onChange={() => toggleTarget(group)}
+                />
+                {group}
+              </label>
+            ))}
+          </div>
+          {preview && selectedNodes.size > 0 && (
+            <ul className="batch-preview" aria-live="polite">
+              {preview.targets.map((target) => (
+                <li key={target.groupName}>
+                  <strong>{target.groupName}</strong>
+                  {target.additions.length > 0
+                    ? `: conceder ${target.additions.join(", ")}.`
+                    : ": sin permisos nuevos."}
+                  {target.alreadyPresent.length > 0 &&
+                    ` Ya contiene ${target.alreadyPresent.join(", ")}.`}
+                </li>
+              ))}
+            </ul>
+          )}
+        </fieldset>
+      )}
       <div className="selection-dock">
-        <span>{selectedNodes.size} seleccionados</span>
+        <span aria-live="polite">
+          {preview
+            ? `${selectedNodes.size} seleccionados, ${preview.additionCount} concesiones nuevas en ${preview.targets.length} grupos.`
+            : `${selectedNodes.size} seleccionados. Importa un backup para elegir destinos.`}
+        </span>
         <button
           type="button"
           className="primary-action"
-          disabled={!canApply || selectedNodes.size === 0}
+          disabled={!preview || preview.additionCount === 0}
           onClick={apply}
         >
           Añadir concedidos <Sparkles size={15} />

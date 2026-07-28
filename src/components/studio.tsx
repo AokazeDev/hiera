@@ -13,9 +13,11 @@ import type { PermissionTransferMode } from "@/lib/luckperms";
 import {
   addGroupInheritance,
   addUserMembership,
+  applyPermissionBatch,
   createGroup,
   deleteGroup,
   emptyBackupHistory,
+  previewPermissionBatch,
   recordBackupChange,
   redoBackupChange,
   removeDirectPermission,
@@ -89,34 +91,13 @@ export function Studio() {
     setBackup(next);
   }
 
-  function applyPermissions(nodes: string[]) {
-    if (!backup || !selectedGroup) return;
-    const group = backup.groups[selectedGroup];
-    const existing = new Set(
-      group.nodes
-        .filter((node) => node.type === "permission")
-        .map((node) => node.key),
-    );
-    const additions = authMeReloaded.permissions
-      .filter(
-        (permission) =>
-          nodes.includes(permission.node) && !existing.has(permission.node),
-      )
-      .map((permission) => ({
-        type: "permission",
-        key: permission.node,
-        value: true,
-      }));
-    if (!additions.length) return;
+  function applyPermissions(nodes: string[], groupNames: string[]) {
+    if (!backup) return;
+    const preview = previewPermissionBatch(backup, groupNames, nodes);
+    if (preview.additionCount === 0) return;
     updateBackup(
-      {
-        ...backup,
-        groups: {
-          ...backup.groups,
-          [selectedGroup]: { ...group, nodes: [...group.nodes, ...additions] },
-        },
-      },
-      `Añadir ${additions.length} permisos de AuthMe Reloaded`,
+      applyPermissionBatch(backup, groupNames, nodes),
+      `Aplicar ${preview.additionCount} permisos de AuthMe Reloaded a ${preview.targets.length} grupos`,
     );
   }
 
@@ -389,8 +370,8 @@ export function Studio() {
           />
         ) : (
           <CatalogPanel
+            backup={backup}
             catalog={authMeReloaded}
-            canApply={Boolean(backup && selectedGroup)}
             groupName={selectedGroup}
             onApply={applyPermissions}
           />
