@@ -1,18 +1,29 @@
-import { FileUp, Users } from "lucide-react";
+import { FileUp, UserRound, Users } from "lucide-react";
+import { GroupManager } from "@/components/studio/group-manager";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
 type BackupRailProps = {
   backup: LuckPermsBackup | null;
   selectedGroup: string | null;
+  selectedUser: string | null;
   onSelectGroup: (group: string) => void;
+  onSelectUser: (userId: string) => void;
   onImport: () => void;
+  onCreateGroup: (groupName: string) => void;
+  onRenameGroup: (groupName: string) => void;
+  onDeleteGroup: () => void;
 };
 
 export function BackupRail({
   backup,
   selectedGroup,
+  selectedUser,
   onSelectGroup,
+  onSelectUser,
   onImport,
+  onCreateGroup,
+  onRenameGroup,
+  onDeleteGroup,
 }: BackupRailProps) {
   return (
     <aside className="group-rail" aria-label="Grupos y usuarios">
@@ -45,6 +56,35 @@ export function BackupRail({
               </button>
             ))}
           </div>
+          <GroupManager
+            backup={backup}
+            groupName={selectedGroup}
+            onCreate={onCreateGroup}
+            onRename={onRenameGroup}
+            onDelete={onDeleteGroup}
+          />
+          <div className="user-list-heading">
+            <span>USUARIOS</span>
+            <small>{Object.keys(backup.users ?? {}).length}</small>
+          </div>
+          {Object.entries(backup.users ?? {}).length ? (
+            <div className="group-list user-list">
+              {Object.entries(backup.users ?? {}).map(([userId, user]) => (
+                <button
+                  type="button"
+                  key={userId}
+                  className={`group-row ${userId === selectedUser ? "is-active" : ""}`}
+                  onClick={() => onSelectUser(userId)}
+                >
+                  <UserRound size={13} aria-hidden="true" />
+                  <span>{user.username ?? userId}</span>
+                  <small>{user.primaryGroup ?? "sin primario"}</small>
+                </button>
+              ))}
+            </div>
+          ) : (
+            <p className="user-empty">No hay usuarios en este backup.</p>
+          )}
           <div className="user-count">
             <Users size={15} /> {Object.keys(backup.users ?? {}).length}{" "}
             usuarios en el backup

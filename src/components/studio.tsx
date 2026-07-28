@@ -8,9 +8,18 @@ import { BackupRail } from "@/components/studio/backup-rail";
 import { CatalogPanel } from "@/components/studio/catalog-panel";
 import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
+import { UserMembershipEditor } from "@/components/studio/user-membership-editor";
 import {
+  addGroupInheritance,
+  addUserMembership,
+  createGroup,
+  deleteGroup,
   removeDirectPermission,
+  removeGroupInheritance,
+  removeUserMembership,
+  renameGroup,
   setDirectPermissionValue,
+  setUserPrimaryGroup,
   upsertGlobalPermission,
 } from "@/lib/luckperms";
 import { authMeReloaded, type LuckPermsBackup } from "@/lib/permissions";
@@ -20,6 +29,7 @@ export function Studio() {
   const input = useRef<HTMLInputElement>(null);
   const [backup, setBackup] = useState<LuckPermsBackup | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [history, setHistory] = useState<LuckPermsBackup[]>([]);
   const [workspace, setWorkspace] = useState<"editor" | "catalog">("editor");
 
@@ -53,6 +63,7 @@ export function Studio() {
           throw new Error("No contiene grupos de LuckPerms.");
         setBackup(parsed);
         setSelectedGroup(Object.keys(parsed.groups)[0] ?? null);
+        setSelectedUser(null);
         setHistory([]);
       } catch (error) {
         window.alert(
@@ -110,6 +121,55 @@ export function Studio() {
   function removePermission(nodeIndex: number) {
     if (!backup || !selectedGroup) return;
     updateBackup(removeDirectPermission(backup, selectedGroup, nodeIndex));
+  }
+
+  function addInheritance(parentName: string) {
+    if (!backup || !selectedGroup) return;
+    updateBackup(addGroupInheritance(backup, selectedGroup, parentName));
+  }
+
+  function removeInheritance(nodeIndex: number) {
+    if (!backup || !selectedGroup) return;
+    updateBackup(removeGroupInheritance(backup, selectedGroup, nodeIndex));
+  }
+
+  function addMembership(groupName: string) {
+    if (!backup || !selectedUser) return;
+    updateBackup(addUserMembership(backup, selectedUser, groupName));
+  }
+
+  function removeMembership(nodeIndex: number) {
+    if (!backup || !selectedUser) return;
+    updateBackup(removeUserMembership(backup, selectedUser, nodeIndex));
+  }
+
+  function changePrimaryGroup(groupName: string | null) {
+    if (!backup || !selectedUser) return;
+    updateBackup(setUserPrimaryGroup(backup, selectedUser, groupName));
+  }
+
+  function createNewGroup(groupName: string) {
+    if (!backup) return;
+    updateBackup(createGroup(backup, groupName));
+    setSelectedGroup(groupName);
+    setSelectedUser(null);
+  }
+
+  function renameSelectedGroup(groupName: string) {
+    if (!backup || !selectedGroup) return;
+    updateBackup(renameGroup(backup, selectedGroup, groupName));
+    setSelectedGroup(groupName);
+    setSelectedUser(null);
+  }
+
+  function deleteSelectedGroup() {
+    if (!backup || !selectedGroup) return;
+    const remainingGroups = Object.keys(backup.groups).filter(
+      (name) => name !== selectedGroup,
+    );
+    updateBackup(deleteGroup(backup, selectedGroup));
+    setSelectedGroup(remainingGroups[0] ?? null);
+    setSelectedUser(null);
   }
 
   function exportBackup() {
@@ -196,10 +256,29 @@ export function Studio() {
         <BackupRail
           backup={backup}
           selectedGroup={selectedGroup}
-          onSelectGroup={setSelectedGroup}
+          selectedUser={selectedUser}
+          onSelectGroup={(groupName) => {
+            setSelectedGroup(groupName);
+            setSelectedUser(null);
+          }}
+          onSelectUser={(userId) => {
+            setSelectedUser(userId);
+            setSelectedGroup(null);
+          }}
           onImport={() => input.current?.click()}
+          onCreateGroup={createNewGroup}
+          onRenameGroup={renameSelectedGroup}
+          onDeleteGroup={deleteSelectedGroup}
         />
-        {workspace === "editor" ? (
+        {workspace === "editor" && selectedUser ? (
+          <UserMembershipEditor
+            backup={backup}
+            userId={selectedUser}
+            onAddMembership={addMembership}
+            onRemoveMembership={removeMembership}
+            onSetPrimaryGroup={changePrimaryGroup}
+          />
+        ) : workspace === "editor" ? (
           <GroupPermissionEditor
             backup={backup}
             groupName={selectedGroup}
@@ -221,6 +300,8 @@ export function Studio() {
           canUndo={history.length > 0}
           onUndo={undo}
           onSelectGroup={setSelectedGroup}
+          onAddInheritance={addInheritance}
+          onRemoveInheritance={removeInheritance}
         />
       </section>
     </main>
