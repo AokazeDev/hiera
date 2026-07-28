@@ -1,14 +1,20 @@
-import { Info, ShieldAlert, Undo2, UserRound } from "lucide-react";
+import { Info, ShieldAlert, UserRound } from "lucide-react";
+import { EditHistory } from "@/components/studio/edit-history";
 import { GroupInheritanceEditor } from "@/components/studio/group-inheritance-editor";
-import { getEffectiveNodes, getEffectiveUserNodes } from "@/lib/luckperms";
+import {
+  type BackupHistory,
+  getEffectiveNodes,
+  getEffectiveUserNodes,
+} from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
 type ResolutionPanelProps = {
   backup: LuckPermsBackup | null;
   groupName: string | null;
   userId: string | null;
-  canUndo: boolean;
+  history: BackupHistory;
   onUndo: () => void;
+  onRedo: () => void;
   onSelectGroup: (group: string) => void;
   onAddInheritance: (parentName: string) => void;
   onRemoveInheritance: (nodeIndex: number) => void;
@@ -18,8 +24,9 @@ export function ResolutionPanel({
   backup,
   groupName,
   userId,
-  canUndo,
+  history,
   onUndo,
+  onRedo,
   onSelectGroup,
   onAddInheritance,
   onRemoveInheritance,
@@ -36,17 +43,6 @@ export function ResolutionPanel({
     <aside className="resolution-panel">
       <div className="rail-heading">
         <span>RESOLUCIÓN</span>
-        {backup && (
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="Deshacer último cambio"
-            disabled={!canUndo}
-            onClick={onUndo}
-          >
-            <Undo2 size={14} />
-          </button>
-        )}
       </div>
       {backup && group && groupName ? (
         <>
@@ -111,6 +107,9 @@ export function ResolutionPanel({
             backup.
           </p>
         </div>
+      )}
+      {backup && (
+        <EditHistory history={history} onUndo={onUndo} onRedo={onRedo} />
       )}
       <div className="safety-note">
         <ShieldAlert size={15} />

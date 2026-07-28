@@ -159,6 +159,82 @@
   color: var(--muted);
   font-size: 11px;
 }
+.edit-history {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 13px;
+}
+.edit-history-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.edit-history-heading p {
+  margin: 0;
+  font:
+    10px var(--font-geist-mono),
+    monospace;
+  letter-spacing: 0.06em;
+}
+.edit-history-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+.edit-history-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid #9ea69d;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 7px 5px;
+  font-size: 11px;
+}
+.edit-history-actions button:hover:not(:disabled) {
+  border-color: #526b10;
+  background: #d4e58d;
+}
+.edit-history-actions button:disabled {
+  cursor: not-allowed;
+  color: var(--muted);
+  opacity: 0.65;
+}
+.edit-history-list {
+  display: grid;
+  gap: 6px;
+  max-height: 160px;
+  overflow: auto;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.edit-history-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid #cfcec3;
+  padding-bottom: 6px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.edit-history-list small {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font:
+    9px var(--font-geist-mono),
+    monospace;
+}
+.edit-history-empty {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
 .safety-note {
   display: flex;
   gap: 8px;

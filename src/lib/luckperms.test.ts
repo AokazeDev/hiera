@@ -5,12 +5,15 @@ import {
   createGroup,
   deleteGroup,
   diagnoseBackup,
+  emptyBackupHistory,
   getEffectiveNodes,
   getEffectiveUserNodes,
   getGroupReferences,
   getParents,
   getUserMemberships,
   isValidPermissionKey,
+  recordBackupChange,
+  redoBackupChange,
   removeDirectPermission,
   removeGroupInheritance,
   removeUserDirectPermission,
@@ -19,6 +22,7 @@ import {
   setDirectPermissionValue,
   setUserDirectPermissionValue,
   setUserPrimaryGroup,
+  undoBackupChange,
   upsertGlobalPermission,
   upsertUserGlobalPermission,
   validateGroupDeletion,
@@ -129,6 +133,44 @@ describe("Backup diagnostics", () => {
     });
 
     expect(diagnostics.duplicatePermissions).toEqual([]);
+  });
+});
+
+describe("Edit history", () => {
+  it("undos and redoes a labelled backup change", () => {
+    const changed = createGroup(backup, "builder");
+    const history = recordBackupChange(
+      emptyBackupHistory,
+      backup,
+      "Crear grupo builder",
+    );
+    const undone = undoBackupChange(history, changed);
+
+    expect(undone?.backup).toBe(backup);
+    expect(undone?.history.future).toHaveLength(1);
+    expect(undone?.history.future[0].label).toBe("Crear grupo builder");
+
+    const redone = undone && redoBackupChange(undone.history, undone.backup);
+
+    expect(redone?.backup).toBe(changed);
+    expect(redone?.history.past.at(-1)?.label).toBe("Crear grupo builder");
+  });
+
+  it("clears redo entries when recording a new change", () => {
+    const changed = createGroup(backup, "builder");
+    const undone = undoBackupChange(
+      recordBackupChange(emptyBackupHistory, backup, "Crear grupo builder"),
+      changed,
+    );
+    const next = recordBackupChange(
+      undone?.history ?? emptyBackupHistory,
+      undone?.backup ?? backup,
+      "Cambiar permiso",
+    );
+
+    expect(next.future).toEqual([]);
+    expect(next.past).toHaveLength(1);
+    expect(next.past[0].label).toBe("Cambiar permiso");
   });
 });
 

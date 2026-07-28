@@ -14,6 +14,9 @@ import {
   addUserMembership,
   createGroup,
   deleteGroup,
+  emptyBackupHistory,
+  recordBackupChange,
+  redoBackupChange,
   removeDirectPermission,
   removeGroupInheritance,
   removeUserDirectPermission,
@@ -22,6 +25,7 @@ import {
   setDirectPermissionValue,
   setUserDirectPermissionValue,
   setUserPrimaryGroup,
+  undoBackupChange,
   upsertGlobalPermission,
   upsertUserGlobalPermission,
 } from "@/lib/luckperms";
@@ -33,7 +37,7 @@ export function Studio() {
   const [backup, setBackup] = useState<LuckPermsBackup | null>(null);
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [history, setHistory] = useState<LuckPermsBackup[]>([]);
+  const [history, setHistory] = useState(emptyBackupHistory);
   const [workspace, setWorkspace] = useState<"editor" | "catalog">("editor");
 
   useEffect(() => {
@@ -67,7 +71,7 @@ export function Studio() {
         setBackup(parsed);
         setSelectedGroup(Object.keys(parsed.groups)[0] ?? null);
         setSelectedUser(null);
-        setHistory([]);
+        setHistory(emptyBackupHistory);
       } catch (error) {
         window.alert(
           `No se pudo leer el backup: ${error instanceof Error ? error.message : "JSON invalido"}`,
@@ -77,8 +81,9 @@ export function Studio() {
     reader.readAsText(file);
   }
 
-  function updateBackup(next: LuckPermsBackup) {
-    if (backup) setHistory((items) => [...items.slice(-19), backup]);
+  function updateBackup(next: LuckPermsBackup, label: string) {
+    if (!backup || next === backup) return;
+    setHistory((current) => recordBackupChange(current, backup, label));
     setBackup(next);
   }
 
@@ -100,84 +105,122 @@ export function Studio() {
         key: permission.node,
         value: true,
       }));
-    updateBackup({
-      ...backup,
-      groups: {
-        ...backup.groups,
-        [selectedGroup]: { ...group, nodes: [...group.nodes, ...additions] },
+    if (!additions.length) return;
+    updateBackup(
+      {
+        ...backup,
+        groups: {
+          ...backup.groups,
+          [selectedGroup]: { ...group, nodes: [...group.nodes, ...additions] },
+        },
       },
-    });
+      `Añadir ${additions.length} permisos de AuthMe Reloaded`,
+    );
   }
 
   function addPermission(key: string, value: boolean) {
     if (!backup || !selectedGroup) return;
-    updateBackup(upsertGlobalPermission(backup, selectedGroup, key, value));
+    updateBackup(
+      upsertGlobalPermission(backup, selectedGroup, key, value),
+      `${value ? "Conceder" : "Denegar"} ${key} en ${selectedGroup}`,
+    );
   }
 
   function setPermissionValue(nodeIndex: number, value: boolean) {
     if (!backup || !selectedGroup) return;
     updateBackup(
       setDirectPermissionValue(backup, selectedGroup, nodeIndex, value),
+      `${value ? "Conceder" : "Denegar"} permiso en ${selectedGroup}`,
     );
   }
 
   function removePermission(nodeIndex: number) {
     if (!backup || !selectedGroup) return;
-    updateBackup(removeDirectPermission(backup, selectedGroup, nodeIndex));
+    updateBackup(
+      removeDirectPermission(backup, selectedGroup, nodeIndex),
+      `Eliminar permiso de ${selectedGroup}`,
+    );
   }
 
   function addInheritance(parentName: string) {
     if (!backup || !selectedGroup) return;
-    updateBackup(addGroupInheritance(backup, selectedGroup, parentName));
+    updateBackup(
+      addGroupInheritance(backup, selectedGroup, parentName),
+      `Heredar ${parentName} en ${selectedGroup}`,
+    );
   }
 
   function removeInheritance(nodeIndex: number) {
     if (!backup || !selectedGroup) return;
-    updateBackup(removeGroupInheritance(backup, selectedGroup, nodeIndex));
+    updateBackup(
+      removeGroupInheritance(backup, selectedGroup, nodeIndex),
+      `Quitar herencia de ${selectedGroup}`,
+    );
   }
 
   function addMembership(groupName: string) {
     if (!backup || !selectedUser) return;
-    updateBackup(addUserMembership(backup, selectedUser, groupName));
+    updateBackup(
+      addUserMembership(backup, selectedUser, groupName),
+      `Añadir usuario a ${groupName}`,
+    );
   }
 
   function removeMembership(nodeIndex: number) {
     if (!backup || !selectedUser) return;
-    updateBackup(removeUserMembership(backup, selectedUser, nodeIndex));
+    updateBackup(
+      removeUserMembership(backup, selectedUser, nodeIndex),
+      "Quitar membresía de usuario",
+    );
   }
 
   function changePrimaryGroup(groupName: string | null) {
     if (!backup || !selectedUser) return;
-    updateBackup(setUserPrimaryGroup(backup, selectedUser, groupName));
+    updateBackup(
+      setUserPrimaryGroup(backup, selectedUser, groupName),
+      groupName
+        ? `Cambiar grupo primario a ${groupName}`
+        : "Limpiar grupo primario de usuario",
+    );
   }
 
   function addUserPermission(key: string, value: boolean) {
     if (!backup || !selectedUser) return;
-    updateBackup(upsertUserGlobalPermission(backup, selectedUser, key, value));
+    updateBackup(
+      upsertUserGlobalPermission(backup, selectedUser, key, value),
+      `${value ? "Conceder" : "Denegar"} ${key} a usuario`,
+    );
   }
 
   function setUserPermissionValue(nodeIndex: number, value: boolean) {
     if (!backup || !selectedUser) return;
     updateBackup(
       setUserDirectPermissionValue(backup, selectedUser, nodeIndex, value),
+      `${value ? "Conceder" : "Denegar"} permiso de usuario`,
     );
   }
 
   function removeUserPermission(nodeIndex: number) {
     if (!backup || !selectedUser) return;
-    updateBackup(removeUserDirectPermission(backup, selectedUser, nodeIndex));
+    updateBackup(
+      removeUserDirectPermission(backup, selectedUser, nodeIndex),
+      "Eliminar permiso de usuario",
+    );
   }
 
   function createNewGroup(groupName: string) {
     if (!backup) return;
-    updateBackup(createGroup(backup, groupName));
+    updateBackup(createGroup(backup, groupName), `Crear grupo ${groupName}`);
     setSelectedGroup(groupName);
     setSelectedUser(null);
   }
 
   function renameSelectedGroup(groupName: string) {
     if (!backup || !selectedGroup) return;
-    updateBackup(renameGroup(backup, selectedGroup, groupName));
+    updateBackup(
+      renameGroup(backup, selectedGroup, groupName),
+      `Renombrar ${selectedGroup} a ${groupName}`,
+    );
     setSelectedGroup(groupName);
     setSelectedUser(null);
   }
@@ -187,7 +230,10 @@ export function Studio() {
     const remainingGroups = Object.keys(backup.groups).filter(
       (name) => name !== selectedGroup,
     );
-    updateBackup(deleteGroup(backup, selectedGroup));
+    updateBackup(
+      deleteGroup(backup, selectedGroup),
+      `Eliminar grupo ${selectedGroup}`,
+    );
     setSelectedGroup(remainingGroups[0] ?? null);
     setSelectedUser(null);
   }
@@ -205,10 +251,19 @@ export function Studio() {
   }
 
   function undo() {
-    const previous = history.at(-1);
-    if (!previous) return;
-    setBackup(previous);
-    setHistory((items) => items.slice(0, -1));
+    if (!backup) return;
+    const result = undoBackupChange(history, backup);
+    if (!result) return;
+    setBackup(result.backup);
+    setHistory(result.history);
+  }
+
+  function redo() {
+    if (!backup) return;
+    const result = redoBackupChange(history, backup);
+    if (!result) return;
+    setBackup(result.backup);
+    setHistory(result.history);
   }
 
   return (
@@ -321,8 +376,9 @@ export function Studio() {
           backup={backup}
           groupName={selectedGroup}
           userId={selectedUser}
-          canUndo={history.length > 0}
+          history={history}
           onUndo={undo}
+          onRedo={redo}
           onSelectGroup={setSelectedGroup}
           onAddInheritance={addInheritance}
           onRemoveInheritance={removeInheritance}
