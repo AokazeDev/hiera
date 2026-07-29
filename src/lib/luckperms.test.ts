@@ -11,12 +11,15 @@ import {
   diffBackups,
   emptyBackupHistory,
   getEffectiveNodes,
+  getEffectiveNodesForContext,
   getEffectiveUserNodes,
+  getEffectiveUserNodesForContext,
   getGroupReferences,
   getParents,
   getUserMemberships,
   inspectNodes,
   isValidPermissionKey,
+  matchesActiveContext,
   previewCatalogPermissionDecision,
   previewPermissionBatch,
   recordBackupChange,
@@ -27,7 +30,9 @@ import {
   removeUserMembership,
   renameGroup,
   searchPermissions,
+  setDirectPermissionContext,
   setDirectPermissionValue,
+  setUserDirectPermissionContext,
   setUserDirectPermissionValue,
   setUserPrimaryGroup,
   transferGroupPermission,
@@ -38,6 +43,7 @@ import {
   validateGroupInheritance,
   validateGroupPermissionTransfer,
   validateNewGroupName,
+  validatePermissionContext,
   validateUserMembership,
 } from "./luckperms";
 import type { LuckPermsBackup } from "./permissions";
@@ -111,6 +117,108 @@ describe("LuckPerms inheritance resolution", () => {
         inherited: true,
       },
     ]);
+  });
+});
+
+describe("LuckPerms contextual resolution", () => {
+  const contextualBackup: LuckPermsBackup = {
+    groups: {
+      parent: {
+        nodes: [
+          { type: "permission", key: "server.fly", value: true },
+          {
+            type: "permission",
+            key: "server.build",
+            value: true,
+            context: { world: "nether" },
+          },
+        ],
+      },
+      child: {
+        nodes: [
+          { type: "inheritance", key: "group.parent", value: true },
+          { type: "permission", key: "server.fly", value: false },
+          {
+            type: "permission",
+            key: "server.build",
+            value: false,
+            context: { world: "nether", server: "lobby" },
+          },
+        ],
+      },
+    },
+    users: {
+      player: {
+        nodes: [
+          { type: "inheritance", key: "group.child", value: true },
+          {
+            type: "permission",
+            key: "server.fly",
+            value: true,
+            context: { world: "nether" },
+          },
+        ],
+      },
+    },
+  };
+
+  it("matches every required key and any active value for each key", () => {
+    expect(
+      matchesActiveContext(
+        { world: ["nether", "end"], server: "lobby" },
+        { WORLD: "NETHER", server: "lobby" },
+      ),
+    ).toBe(true);
+    expect(
+      matchesActiveContext(
+        { world: "nether", server: "lobby" },
+        { world: "nether" },
+      ),
+    ).toBe(false);
+  });
+
+  it("uses the most specific applicable direct node before inherited nodes", () => {
+    expect(
+      getEffectiveNodesForContext(contextualBackup, "child", {
+        world: "nether",
+        server: "lobby",
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "server.fly",
+          value: false,
+          origin: "child",
+        }),
+        expect.objectContaining({
+          key: "server.build",
+          value: false,
+          origin: "child",
+        }),
+      ]),
+    );
+  });
+
+  it("excludes contextual nodes when no matching active context exists", () => {
+    expect(getEffectiveNodesForContext(contextualBackup, "child", {})).toEqual([
+      expect.objectContaining({ key: "server.fly", value: false }),
+    ]);
+  });
+
+  it("gives an applicable direct user node precedence over memberships", () => {
+    expect(
+      getEffectiveUserNodesForContext(contextualBackup, "player", {
+        world: "nether",
+      }),
+    ).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "server.fly",
+          value: true,
+          origin: "player",
+        }),
+      ]),
+    );
   });
 });
 
@@ -411,6 +519,118 @@ describe("Direct permission editing", () => {
     expect(isValidPermissionKey("plugin.permission")).toBe(true);
     expect(isValidPermissionKey(" ")).toBe(false);
     expect(isValidPermissionKey("plugin permission")).toBe(false);
+  });
+
+  it("edits a permission context without changing its attributes", () => {
+    const contextual: LuckPermsBackup = {
+      groups: {
+        default: {
+          nodes: [
+            {
+              type: "permission",
+              key: "server.chat",
+              value: true,
+              context: { world: "nether" },
+              expiry: 1_800_000_000,
+            },
+          ],
+        },
+      },
+    };
+
+    expect(
+      setDirectPermissionContext(contextual, "default", 0, {
+        server: "lobby",
+      }).groups.default.nodes[0],
+    ).toEqual({
+      type: "permission",
+      key: "server.chat",
+      value: true,
+      context: { server: "lobby" },
+      expiry: 1_800_000_000,
+    });
+  });
+
+  it("turns an edited permission into a global node when its context is empty", () => {
+    const contextual = setDirectPermissionContext(
+      {
+        groups: {
+          default: {
+            nodes: [
+              {
+                type: "permission",
+                key: "server.chat",
+                value: true,
+                context: { world: "nether" },
+              },
+            ],
+          },
+        },
+      },
+      "default",
+      0,
+      {},
+    );
+
+    expect(contextual.groups.default.nodes[0]).toEqual({
+      type: "permission",
+      key: "server.chat",
+      value: true,
+    });
+  });
+
+  it("rejects invalid and duplicate permission contexts", () => {
+    const withDuplicate: LuckPermsBackup = {
+      groups: {
+        default: {
+          nodes: [
+            { type: "permission", key: "server.chat", value: true },
+            {
+              type: "permission",
+              key: "server.chat",
+              value: false,
+              context: { world: "nether" },
+            },
+          ],
+        },
+      },
+    };
+
+    expect(validatePermissionContext({ "bad key": "nether" })).toBeTruthy();
+    expect(validatePermissionContext({ world: [] })).toBeTruthy();
+    expect(
+      setDirectPermissionContext(withDuplicate, "default", 0, {
+        world: "nether",
+      }),
+    ).toBe(withDuplicate);
+  });
+
+  it("edits a user context without changing the group nodes", () => {
+    const userBackup: LuckPermsBackup = {
+      groups: {
+        default: {
+          nodes: [{ type: "permission", key: "server.chat", value: true }],
+        },
+      },
+      users: {
+        player: {
+          nodes: [
+            {
+              type: "permission",
+              key: "server.chat",
+              value: false,
+              context: { server: "lobby" },
+            },
+          ],
+        },
+      },
+    };
+
+    const changed = setUserDirectPermissionContext(userBackup, "player", 0, {
+      world: "nether",
+    });
+    expect(changed.users?.player.nodes[0].context).toEqual({ world: "nether" });
+    expect(changed.groups).toBe(userBackup.groups);
   });
 });
 

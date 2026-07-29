@@ -6,6 +6,26 @@
   letter-spacing: -0.04em;
   margin: 24px 0;
 }
+.active-context {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  margin-block: 1rem;
+  border-block: 1px solid var(--line);
+  padding-block: 0.75rem;
+}
+.active-context p,
+.context-conflict {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+.context-conflict {
+  color: #9a3636;
+}
+.active-context .permission-context-editor {
+  grid-column: 1 / -1;
+}
 .inheritance-editor {
   border-top: 1px solid var(--line);
   padding-top: 13px;

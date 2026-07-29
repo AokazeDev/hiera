@@ -152,6 +152,21 @@
   .permission-group-nodes {
     margin-left: 18px;
   }
+  .permission-context-editor {
+    margin-left: 18px;
+    padding-left: 12px;
+  }
+  .permission-context-row {
+    grid-template-columns: 1fr auto;
+  }
+  .permission-context-row label:first-child {
+    grid-column: 1 / -1;
+  }
+  .permission-context-heading,
+  .permission-context-actions {
+    align-items: start;
+    flex-direction: column;
+  }
   .catalog-controls,
   .workspace-title {
     align-items: start;

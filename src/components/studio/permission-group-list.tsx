@@ -8,18 +8,27 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import type { PermissionGroup, PermissionGrouping } from "@/lib/luckperms";
+import { useState } from "react";
+import { PermissionContextEditor } from "@/components/studio/permission-context-editor";
+import {
+  type PermissionContext,
+  type PermissionGroup,
+  type PermissionGrouping,
+  validatePermissionContextUpdate,
+} from "@/lib/luckperms";
 import type { LuckPermsNode } from "@/lib/permissions";
 
 type DirectPermission = { node: LuckPermsNode; index: number };
 
 type PermissionGroupListProps = {
+  nodes: LuckPermsNode[];
   groups: PermissionGroup<DirectPermission>[];
   grouping: PermissionGrouping;
   subjectLabel: string;
   expandedGroups: Set<string>;
   onToggleGroup: (groupId: string) => void;
   onSetValue: (nodeIndex: number, value: boolean) => void;
+  onSetContext: (nodeIndex: number, context: PermissionContext) => void;
   onRemove: (nodeIndex: number) => void;
   onPrepareTransfer?: (nodeIndex: number) => void;
   onStartDrag?: (nodeIndex: number) => void;
@@ -42,17 +51,23 @@ function permissionSummary(items: DirectPermission[]): string {
 }
 
 export function PermissionGroupList({
+  nodes,
   groups,
   grouping,
   subjectLabel,
   expandedGroups,
   onToggleGroup,
   onSetValue,
+  onSetContext,
   onRemove,
   onPrepareTransfer,
   onStartDrag,
   onEndDrag,
 }: PermissionGroupListProps) {
+  const [editingContextIndex, setEditingContextIndex] = useState<number | null>(
+    null,
+  );
+
   return (
     <section
       className="direct-permission-list"
@@ -132,6 +147,13 @@ export function PermissionGroupList({
                             </button>
                             <button
                               type="button"
+                              className="transfer-permission"
+                              onClick={() => setEditingContextIndex(index)}
+                            >
+                              Contexto
+                            </button>
+                            <button
+                              type="button"
                               className={
                                 !node.value
                                   ? "permission-state is-denied"
@@ -161,6 +183,21 @@ export function PermissionGroupList({
                             )}
                           </div>
                         </article>
+                        {editingContextIndex === index && (
+                          <PermissionContextEditor
+                            context={node.context}
+                            nodeKey={node.key}
+                            validateContext={(context) =>
+                              validatePermissionContextUpdate(
+                                nodes,
+                                index,
+                                context,
+                              )
+                            }
+                            onSave={(context) => onSetContext(index, context)}
+                            onClose={() => setEditingContextIndex(null)}
+                          />
+                        )}
                       </li>
                     );
                   })}

@@ -3,7 +3,10 @@
 import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
 import { PermissionTransferPanel } from "@/components/studio/permission-transfer-panel";
-import type { PermissionTransferMode } from "@/lib/luckperms";
+import type {
+  PermissionContext,
+  PermissionTransferMode,
+} from "@/lib/luckperms";
 import type { LuckPermsBackup, PermissionEntry } from "@/lib/permissions";
 
 type GroupPermissionEditorProps = {
@@ -11,6 +14,7 @@ type GroupPermissionEditorProps = {
   groupName: string | null;
   onAdd: (key: string, value: boolean) => void;
   onSetValue: (nodeIndex: number, value: boolean) => void;
+  onSetContext: (nodeIndex: number, context: PermissionContext) => void;
   onRemove: (nodeIndex: number) => void;
   onTransfer: (
     nodeIndex: number,
@@ -30,6 +34,7 @@ export function GroupPermissionEditor({
   groupName,
   onAdd,
   onSetValue,
+  onSetContext,
   onRemove,
   onTransfer,
   transferRequest,
@@ -66,6 +71,7 @@ export function GroupPermissionEditor({
             subjectLabel={`El grupo ${groupName}`}
             onAdd={onAdd}
             onSetValue={onSetValue}
+            onSetContext={onSetContext}
             onRemove={onRemove}
             onPrepareTransfer={onPrepareTransfer}
             onStartDrag={onStartDrag}

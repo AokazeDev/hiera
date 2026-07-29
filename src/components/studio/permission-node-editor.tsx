@@ -10,6 +10,7 @@ import {
   filterPermissionNodes,
   groupPermissions,
   isValidPermissionKey,
+  type PermissionContext,
   type PermissionSort,
   sortPermissions,
 } from "@/lib/luckperms";
@@ -20,6 +21,7 @@ type PermissionNodeEditorProps = {
   subjectLabel: string;
   onAdd: (key: string, value: boolean) => void;
   onSetValue: (nodeIndex: number, value: boolean) => void;
+  onSetContext: (nodeIndex: number, context: PermissionContext) => void;
   onRemove: (nodeIndex: number) => void;
   onPrepareTransfer?: (nodeIndex: number) => void;
   onStartDrag?: (nodeIndex: number) => void;
@@ -32,6 +34,7 @@ export function PermissionNodeEditor({
   subjectLabel,
   onAdd,
   onSetValue,
+  onSetContext,
   onRemove,
   onPrepareTransfer,
   onStartDrag,
@@ -122,12 +125,14 @@ export function PermissionNodeEditor({
       <PermissionSortingControl value={sort} onChange={setSort} />
       {permissions.length ? (
         <PermissionGroupList
+          nodes={nodes}
           groups={permissionGroups}
           grouping={grouping}
           subjectLabel={subjectLabel}
           expandedGroups={expandedGroups}
           onToggleGroup={toggleGroup}
           onSetValue={onSetValue}
+          onSetContext={onSetContext}
           onRemove={onRemove}
           onPrepareTransfer={onPrepareTransfer}
           onStartDrag={onStartDrag}

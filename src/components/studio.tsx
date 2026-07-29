@@ -20,6 +20,7 @@ import { ResolutionPanel } from "@/components/studio/resolution-panel";
 import { UserMembershipEditor } from "@/components/studio/user-membership-editor";
 import type {
   CatalogPermissionDecision,
+  PermissionContext,
   PermissionTransferMode,
 } from "@/lib/luckperms";
 import {
@@ -38,7 +39,9 @@ import {
   removeUserDirectPermission,
   removeUserMembership,
   renameGroup,
+  setDirectPermissionContext,
   setDirectPermissionValue,
+  setUserDirectPermissionContext,
   setUserDirectPermissionValue,
   setUserPrimaryGroup,
   transferGroupPermission,
@@ -174,6 +177,14 @@ export function Studio() {
     updateBackup(
       setDirectPermissionValue(backup, selectedGroup, nodeIndex, value),
       `${value ? "Conceder" : "Denegar"} permiso en ${selectedGroup}`,
+    );
+  }
+
+  function setPermissionContext(nodeIndex: number, context: PermissionContext) {
+    if (!backup || !selectedGroup) return;
+    updateBackup(
+      setDirectPermissionContext(backup, selectedGroup, nodeIndex, context),
+      `Actualizar contexto de permiso en ${selectedGroup}`,
     );
   }
 
@@ -338,6 +349,17 @@ export function Studio() {
     updateBackup(
       setUserDirectPermissionValue(backup, selectedUser, nodeIndex, value),
       `${value ? "Conceder" : "Denegar"} permiso de usuario`,
+    );
+  }
+
+  function setUserPermissionContext(
+    nodeIndex: number,
+    context: PermissionContext,
+  ) {
+    if (!backup || !selectedUser) return;
+    updateBackup(
+      setUserDirectPermissionContext(backup, selectedUser, nodeIndex, context),
+      "Actualizar contexto de permiso de usuario",
     );
   }
 
@@ -543,6 +565,7 @@ export function Studio() {
             onSetPrimaryGroup={changePrimaryGroup}
             onAddPermission={addUserPermission}
             onSetPermissionValue={setUserPermissionValue}
+            onSetPermissionContext={setUserPermissionContext}
             onRemovePermission={removeUserPermission}
             catalog={catalog}
           />
@@ -552,6 +575,7 @@ export function Studio() {
             groupName={selectedGroup}
             onAdd={addPermission}
             onSetValue={setPermissionValue}
+            onSetContext={setPermissionContext}
             onRemove={removePermission}
             onTransfer={transferPermission}
             transferRequest={

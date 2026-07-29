@@ -4,6 +4,7 @@ import { GripVertical, Info, ShieldAlert, UserRound } from "lucide-react";
 import { useState } from "react";
 import { EditHistory } from "@/components/studio/edit-history";
 import { GroupInheritanceEditor } from "@/components/studio/group-inheritance-editor";
+import { PermissionContextEditor } from "@/components/studio/permission-context-editor";
 import { PermissionFilterBar } from "@/components/studio/permission-filter-bar";
 import { PermissionGroupingControl } from "@/components/studio/permission-grouping-control";
 import { PermissionSortingControl } from "@/components/studio/permission-sorting-control";
@@ -11,9 +12,10 @@ import {
   type BackupHistory,
   defaultPermissionFilter,
   filterResolvedPermissions,
-  getEffectiveNodes,
-  getEffectiveUserNodes,
+  getEffectiveNodesForContext,
+  getEffectiveUserNodesForContext,
   groupPermissions,
+  type PermissionContext,
   sortPermissions,
 } from "@/lib/luckperms";
 import type { LuckPermsBackup, PermissionEntry } from "@/lib/permissions";
@@ -62,12 +64,18 @@ export function ResolutionPanel({
   const [sort, setSort] = useState<
     "name" | "status" | "category" | "origin" | "recommendation"
   >("name");
+  const [activeContext, setActiveContext] = useState<PermissionContext>({});
+  const [isEditingActiveContext, setIsEditingActiveContext] = useState(false);
   const group = backup && groupName ? backup.groups[groupName] : null;
   const effective =
-    backup && groupName ? getEffectiveNodes(backup, groupName) : [];
+    backup && groupName
+      ? getEffectiveNodesForContext(backup, groupName, activeContext)
+      : [];
   const user = backup && userId ? backup.users?.[userId] : null;
   const userEffective =
-    backup && userId ? getEffectiveUserNodes(backup, userId) : [];
+    backup && userId
+      ? getEffectiveUserNodesForContext(backup, userId, activeContext)
+      : [];
   const selectedName = groupName ?? user?.username ?? userId;
   const selectedEffective = groupName ? effective : userEffective;
   const filteredEffective = sortPermissions(
@@ -102,6 +110,11 @@ export function ResolutionPanel({
                 </span>
                 <code>{node.key}</code>
                 <small>{node.inherited ? node.origin : "directo"}</small>
+                {node.contextConflict && (
+                  <small className="context-conflict">
+                    conflicto contextual
+                  </small>
+                )}
                 {groupName && (
                   <>
                     <button
@@ -164,6 +177,34 @@ export function ResolutionPanel({
       <div className="rail-heading">
         <span>RESOLUCIÓN</span>
       </div>
+      {backup && (groupName || userId) && (
+        <section className="active-context" aria-label="Contexto activo">
+          <div>
+            <strong>Contexto activo</strong>
+            <p>
+              {Object.keys(activeContext).length === 0
+                ? "Global: solo aplican nodos sin contexto."
+                : `${Object.keys(activeContext).length} condiciones activas.`}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="text-button"
+            onClick={() => setIsEditingActiveContext(true)}
+          >
+            Cambiar
+          </button>
+          {isEditingActiveContext && (
+            <PermissionContextEditor
+              context={activeContext}
+              nodeKey="la resolución"
+              validateContext={() => null}
+              onSave={setActiveContext}
+              onClose={() => setIsEditingActiveContext(false)}
+            />
+          )}
+        </section>
+      )}
       {backup && group && groupName ? (
         <>
           <div className="selected-group">

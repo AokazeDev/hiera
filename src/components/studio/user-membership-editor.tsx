@@ -4,7 +4,11 @@ import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
-import { getUserMemberships, validateUserMembership } from "@/lib/luckperms";
+import {
+  getUserMemberships,
+  type PermissionContext,
+  validateUserMembership,
+} from "@/lib/luckperms";
 import type { LuckPermsBackup, PermissionEntry } from "@/lib/permissions";
 
 type UserMembershipEditorProps = {
@@ -15,6 +19,10 @@ type UserMembershipEditorProps = {
   onSetPrimaryGroup: (groupName: string | null) => void;
   onAddPermission: (key: string, value: boolean) => void;
   onSetPermissionValue: (nodeIndex: number, value: boolean) => void;
+  onSetPermissionContext: (
+    nodeIndex: number,
+    context: PermissionContext,
+  ) => void;
   onRemovePermission: (nodeIndex: number) => void;
   catalog?: Map<string, PermissionEntry>;
 };
@@ -27,6 +35,7 @@ export function UserMembershipEditor({
   onSetPrimaryGroup,
   onAddPermission,
   onSetPermissionValue,
+  onSetPermissionContext,
   onRemovePermission,
   catalog,
 }: UserMembershipEditorProps) {
@@ -194,6 +203,7 @@ export function UserMembershipEditor({
           subjectLabel={`El usuario ${displayName}`}
           onAdd={onAddPermission}
           onSetValue={onSetPermissionValue}
+          onSetContext={onSetPermissionContext}
           onRemove={onRemovePermission}
           catalog={catalog}
         />
