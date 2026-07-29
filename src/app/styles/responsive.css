@@ -92,6 +92,10 @@
     grid-template-columns: 1fr;
     align-items: stretch;
   }
+  .permission-form input,
+  .permission-form select {
+    font-size: 16px;
+  }
   .user-primary-group {
     align-items: stretch;
     flex-direction: column;
@@ -120,10 +124,24 @@
   }
   .permission-actions {
     width: 100%;
+    justify-content: flex-start;
   }
   .permission-state {
     flex: 1;
     justify-content: center;
+  }
+  .transfer-permission {
+    flex-basis: 100%;
+    justify-content: center;
+  }
+  .permission-group-toggle {
+    grid-template-columns: auto 10px minmax(0, 1fr) auto;
+  }
+  .permission-group-toggle small {
+    display: none;
+  }
+  .permission-group-nodes {
+    margin-left: 18px;
   }
   .catalog-controls,
   .workspace-title {
@@ -149,6 +167,9 @@
   }
   .permission-table {
     max-height: none;
+  }
+  .inheritance-graph-workspace {
+    grid-template-rows: auto 360px auto;
   }
   .permission-atlas {
     padding: 14px;

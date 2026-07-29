@@ -1,0 +1,146 @@
+"use client";
+
+import { ChevronRight, CopyPlus, Minus, Plus, Trash2 } from "lucide-react";
+import type { PermissionGroup, PermissionGrouping } from "@/lib/luckperms";
+import type { LuckPermsNode } from "@/lib/permissions";
+
+type DirectPermission = { node: LuckPermsNode; index: number };
+
+type PermissionGroupListProps = {
+  groups: PermissionGroup<DirectPermission>[];
+  grouping: PermissionGrouping;
+  subjectLabel: string;
+  expandedGroups: Set<string>;
+  onToggleGroup: (groupId: string) => void;
+  onSetValue: (nodeIndex: number, value: boolean) => void;
+  onRemove: (nodeIndex: number) => void;
+  onPrepareTransfer?: (nodeIndex: number) => void;
+};
+
+function contextLabel(node: LuckPermsNode): string | null {
+  if (!node.context || Object.keys(node.context).length === 0) return null;
+  return Object.entries(node.context)
+    .map(
+      ([key, value]) =>
+        `${key}=${Array.isArray(value) ? value.join(",") : value}`,
+    )
+    .join(" · ");
+}
+
+function permissionSummary(items: DirectPermission[]): string {
+  const granted = items.filter(({ node }) => node.value).length;
+  return `${granted} concedidos, ${items.length - granted} denegados`;
+}
+
+export function PermissionGroupList({
+  groups,
+  grouping,
+  subjectLabel,
+  expandedGroups,
+  onToggleGroup,
+  onSetValue,
+  onRemove,
+  onPrepareTransfer,
+}: PermissionGroupListProps) {
+  return (
+    <section
+      className="direct-permission-list"
+      aria-labelledby="permission-map-title"
+    >
+      <header className="permission-list-heading">
+        <div>
+          <p id="permission-map-title">Mapa de permisos directos</p>
+          <span>
+            Grupo &gt; {grouping === "segment" ? "rama" : "plugin"} &gt; nodo
+          </span>
+        </div>
+        <output>{groups.length} ramas</output>
+      </header>
+      <div className="permission-tree">
+        {groups.map((group) => {
+          const expanded = expandedGroups.has(group.id);
+          const groupId = `permission-group-${encodeURIComponent(group.id)}`;
+
+          return (
+            <section className="permission-group" key={group.id}>
+              <button
+                type="button"
+                className="permission-group-toggle"
+                aria-controls={groupId}
+                aria-expanded={expanded}
+                onClick={() => onToggleGroup(group.id)}
+              >
+                <ChevronRight size={15} aria-hidden="true" />
+                <span className="permission-group-branch" aria-hidden="true" />
+                <code>
+                  {grouping === "flat" ? "Todos los permisos" : group.label}
+                </code>
+                <small>{permissionSummary(group.items)}</small>
+                <strong>{group.items.length}</strong>
+              </button>
+              {expanded && (
+                <ul className="permission-group-nodes" id={groupId}>
+                  {group.items.map(({ node, index }) => {
+                    const context = contextLabel(node);
+                    return (
+                      <li key={`${index}-${node.key}`}>
+                        <article className="direct-permission">
+                          <div>
+                            <code>{node.key}</code>
+                            {context && <small>Contexto: {context}</small>}
+                          </div>
+                          <div className="permission-actions">
+                            <button
+                              type="button"
+                              className={
+                                node.value
+                                  ? "permission-state is-granted"
+                                  : "permission-state"
+                              }
+                              onClick={() => onSetValue(index, true)}
+                            >
+                              <Plus size={13} aria-hidden="true" /> Conceder
+                            </button>
+                            <button
+                              type="button"
+                              className={
+                                !node.value
+                                  ? "permission-state is-denied"
+                                  : "permission-state"
+                              }
+                              onClick={() => onSetValue(index, false)}
+                            >
+                              <Minus size={13} aria-hidden="true" /> Denegar
+                            </button>
+                            <button
+                              type="button"
+                              className="remove-permission"
+                              aria-label={`Eliminar ${node.key} de ${subjectLabel}`}
+                              onClick={() => onRemove(index)}
+                            >
+                              <Trash2 size={14} aria-hidden="true" />
+                            </button>
+                            {onPrepareTransfer && (
+                              <button
+                                type="button"
+                                className="transfer-permission"
+                                onClick={() => onPrepareTransfer(index)}
+                              >
+                                <CopyPlus size={13} aria-hidden="true" /> Copiar
+                                o mover
+                              </button>
+                            )}
+                          </div>
+                        </article>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
+          );
+        })}
+      </div>
+    </section>
+  );
+}

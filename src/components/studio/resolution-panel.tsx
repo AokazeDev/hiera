@@ -6,6 +6,7 @@ import { EditHistory } from "@/components/studio/edit-history";
 import { GroupInheritanceEditor } from "@/components/studio/group-inheritance-editor";
 import { PermissionFilterBar } from "@/components/studio/permission-filter-bar";
 import { PermissionGroupingControl } from "@/components/studio/permission-grouping-control";
+import { PermissionSortingControl } from "@/components/studio/permission-sorting-control";
 import {
   type BackupHistory,
   defaultPermissionFilter,
@@ -13,8 +14,9 @@ import {
   getEffectiveNodes,
   getEffectiveUserNodes,
   groupPermissions,
+  sortPermissions,
 } from "@/lib/luckperms";
-import type { LuckPermsBackup } from "@/lib/permissions";
+import type { LuckPermsBackup, PermissionEntry } from "@/lib/permissions";
 
 type ResolutionPanelProps = {
   backup: LuckPermsBackup | null;
@@ -26,6 +28,7 @@ type ResolutionPanelProps = {
   onSelectGroup: (group: string) => void;
   onAddInheritance: (parentName: string) => void;
   onRemoveInheritance: (nodeIndex: number) => void;
+  catalog?: Map<string, PermissionEntry>;
 };
 
 export function ResolutionPanel({
@@ -38,11 +41,15 @@ export function ResolutionPanel({
   onSelectGroup,
   onAddInheritance,
   onRemoveInheritance,
+  catalog,
 }: ResolutionPanelProps) {
   const [filters, setFilters] = useState(defaultPermissionFilter);
   const [grouping, setGrouping] = useState<"flat" | "plugin" | "segment">(
     "flat",
   );
+  const [sort, setSort] = useState<
+    "name" | "status" | "category" | "origin" | "recommendation"
+  >("name");
   const group = backup && groupName ? backup.groups[groupName] : null;
   const effective =
     backup && groupName ? getEffectiveNodes(backup, groupName) : [];
@@ -51,9 +58,11 @@ export function ResolutionPanel({
     backup && userId ? getEffectiveUserNodes(backup, userId) : [];
   const selectedName = groupName ?? user?.username ?? userId;
   const selectedEffective = groupName ? effective : userEffective;
-  const filteredEffective = filterResolvedPermissions(
-    selectedEffective,
-    filters,
+  const filteredEffective = sortPermissions(
+    filterResolvedPermissions(selectedEffective, filters),
+    sort,
+    (permission) => permission,
+    catalog,
   );
   const totalCount = selectedEffective.length;
   const filteredCount = filteredEffective.length;
@@ -118,6 +127,11 @@ export function ResolutionPanel({
             showOrigin
           />
           <PermissionGroupingControl value={grouping} onChange={setGrouping} />
+          <PermissionSortingControl
+            value={sort}
+            onChange={setSort}
+            showOrigin
+          />
           <div className="effective-count">
             <strong>{filteredCount}</strong>
             <span>
@@ -141,6 +155,11 @@ export function ResolutionPanel({
             showOrigin
           />
           <PermissionGroupingControl value={grouping} onChange={setGrouping} />
+          <PermissionSortingControl
+            value={sort}
+            onChange={setSort}
+            showOrigin
+          />
           <div className="effective-count">
             <strong>{filteredCount}</strong>
             <span>

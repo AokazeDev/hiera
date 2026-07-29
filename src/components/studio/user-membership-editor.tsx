@@ -5,7 +5,7 @@ import { useState } from "react";
 import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
 import { getUserMemberships, validateUserMembership } from "@/lib/luckperms";
-import type { LuckPermsBackup } from "@/lib/permissions";
+import type { LuckPermsBackup, PermissionEntry } from "@/lib/permissions";
 
 type UserMembershipEditorProps = {
   backup: LuckPermsBackup | null;
@@ -16,6 +16,7 @@ type UserMembershipEditorProps = {
   onAddPermission: (key: string, value: boolean) => void;
   onSetPermissionValue: (nodeIndex: number, value: boolean) => void;
   onRemovePermission: (nodeIndex: number) => void;
+  catalog?: Map<string, PermissionEntry>;
 };
 
 export function UserMembershipEditor({
@@ -27,6 +28,7 @@ export function UserMembershipEditor({
   onAddPermission,
   onSetPermissionValue,
   onRemovePermission,
+  catalog,
 }: UserMembershipEditorProps) {
   const [groupName, setGroupName] = useState("");
   const user = backup && userId ? backup.users?.[userId] : null;
@@ -193,6 +195,7 @@ export function UserMembershipEditor({
           onAdd={onAddPermission}
           onSetValue={onSetPermissionValue}
           onRemove={onRemovePermission}
+          catalog={catalog}
         />
       </section>
       <NodeInspector

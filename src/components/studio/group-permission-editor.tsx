@@ -5,7 +5,7 @@ import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
 import { PermissionTransferPanel } from "@/components/studio/permission-transfer-panel";
 import type { PermissionTransferMode } from "@/lib/luckperms";
-import type { LuckPermsBackup } from "@/lib/permissions";
+import type { LuckPermsBackup, PermissionEntry } from "@/lib/permissions";
 
 type GroupPermissionEditorProps = {
   backup: LuckPermsBackup | null;
@@ -18,6 +18,7 @@ type GroupPermissionEditorProps = {
     targetGroup: string,
     mode: PermissionTransferMode,
   ) => void;
+  catalog?: Map<string, PermissionEntry>;
 };
 
 export function GroupPermissionEditor({
@@ -27,6 +28,7 @@ export function GroupPermissionEditor({
   onSetValue,
   onRemove,
   onTransfer,
+  catalog,
 }: GroupPermissionEditorProps) {
   const group = backup && groupName ? backup.groups[groupName] : null;
   const [transferNodeIndex, setTransferNodeIndex] = useState<number | null>(
@@ -58,6 +60,7 @@ export function GroupPermissionEditor({
             onSetValue={onSetValue}
             onRemove={onRemove}
             onPrepareTransfer={setTransferNodeIndex}
+            catalog={catalog}
           />
           <PermissionTransferPanel
             backup={backup}

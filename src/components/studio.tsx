@@ -1,7 +1,13 @@
 "use client";
 
 import gsap from "gsap";
-import { BookOpen, FilePenLine, FileUp, GitCompareArrows } from "lucide-react";
+import {
+  BookOpen,
+  FilePenLine,
+  FileUp,
+  GitCompareArrows,
+  Network,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { BackupRail } from "@/components/studio/backup-rail";
@@ -9,6 +15,7 @@ import { CatalogPanel } from "@/components/studio/catalog-panel";
 import { ExportPreview } from "@/components/studio/export-preview";
 import { GroupComparison } from "@/components/studio/group-comparison";
 import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
+import { InheritanceGraph } from "@/components/studio/inheritance-graph";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
 import { UserMembershipEditor } from "@/components/studio/user-membership-editor";
 import type { PermissionTransferMode } from "@/lib/luckperms";
@@ -48,8 +55,14 @@ export function Studio() {
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [history, setHistory] = useState(emptyBackupHistory);
   const [workspace, setWorkspace] = useState<
-    "editor" | "catalog" | "comparison"
+    "editor" | "catalog" | "comparison" | "inheritance"
   >("editor");
+  const catalog = new Map(
+    authMeReloaded.permissions.map((permission) => [
+      permission.node,
+      permission,
+    ]),
+  );
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: no-preference)");
@@ -317,6 +330,14 @@ export function Studio() {
             >
               <GitCompareArrows size={15} /> Comparar
             </button>
+            <button
+              type="button"
+              className={workspace === "inheritance" ? "is-active" : ""}
+              aria-pressed={workspace === "inheritance"}
+              onClick={() => setWorkspace("inheritance")}
+            >
+              <Network size={15} /> Herencias
+            </button>
           </nav>
           {backup && originalBackup && (
             <ExportPreview
@@ -364,6 +385,15 @@ export function Studio() {
         />
         {workspace === "comparison" ? (
           <GroupComparison backup={backup} initialGroup={selectedGroup} />
+        ) : workspace === "inheritance" ? (
+          <InheritanceGraph
+            backup={backup}
+            groupName={selectedGroup}
+            onSelectGroup={(groupName) => {
+              setSelectedGroup(groupName);
+              setSelectedUser(null);
+            }}
+          />
         ) : workspace === "editor" && selectedUser ? (
           <UserMembershipEditor
             backup={backup}
@@ -374,6 +404,7 @@ export function Studio() {
             onAddPermission={addUserPermission}
             onSetPermissionValue={setUserPermissionValue}
             onRemovePermission={removeUserPermission}
+            catalog={catalog}
           />
         ) : workspace === "editor" ? (
           <GroupPermissionEditor
@@ -383,6 +414,7 @@ export function Studio() {
             onSetValue={setPermissionValue}
             onRemove={removePermission}
             onTransfer={transferPermission}
+            catalog={catalog}
           />
         ) : (
           <CatalogPanel
@@ -402,6 +434,7 @@ export function Studio() {
           onSelectGroup={setSelectedGroup}
           onAddInheritance={addInheritance}
           onRemoveInheritance={removeInheritance}
+          catalog={catalog}
         />
       </section>
     </main>

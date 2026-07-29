@@ -1,0 +1,77 @@
+.inheritance-graph-workspace {
+  display: grid;
+  grid-template-rows: auto minmax(360px, 1fr) auto;
+  gap: 18px;
+}
+.inheritance-graph-workspace .workspace-title {
+  align-items: start;
+}
+.inheritance-graph-workspace .editor-intro {
+  margin: 10px 0 0;
+}
+.inheritance-graph-canvas {
+  min-height: 360px;
+  border: 1px solid var(--line);
+  background: #f7f5ee;
+}
+.inheritance-graph-canvas .react-flow__controls {
+  border: 1px solid #9ea69d;
+  box-shadow: none;
+}
+.inheritance-graph-canvas .react-flow__controls-button {
+  border-bottom-color: #9ea69d;
+  background: #f7f5ee;
+  fill: var(--ink);
+}
+.inheritance-graph-canvas .react-flow__controls-button:hover {
+  background: #dce9a7;
+}
+.inheritance-graph-canvas .react-flow__edge-path {
+  stroke: #718318;
+  stroke-width: 1.5;
+}
+.inheritance-graph-node {
+  display: flex;
+  align-items: center;
+  min-width: 118px;
+  gap: 6px;
+  border: 1px solid #7b8379;
+  background: #f7f5ee;
+  color: var(--ink);
+  padding: 9px 11px;
+  font:
+    12px var(--font-geist-mono),
+    monospace;
+  box-shadow: 3px 3px 0 #d6d6c9;
+}
+.inheritance-graph-node.is-selected {
+  border-color: #526b10;
+  background: #dce9a7;
+  box-shadow: 3px 3px 0 #b6c96b;
+}
+.inheritance-graph-node.is-missing {
+  border-color: #a76868;
+  background: #f0dede;
+  color: #7a2525;
+}
+.inheritance-graph-node .react-flow__handle {
+  width: 6px;
+  height: 6px;
+  border: 1px solid #526b10;
+  background: #f7f5ee;
+}
+.inheritance-graph-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.inheritance-graph-empty {
+  display: grid;
+  place-content: start;
+  gap: 12px;
+  color: var(--muted);
+}
+.inheritance-graph-empty p {
+  margin: 0;
+}

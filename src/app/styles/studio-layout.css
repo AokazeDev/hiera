@@ -1,5 +1,6 @@
 .studio-shell {
   min-height: 100svh;
+  overflow-x: clip;
   background: #f1efe8;
 }
 .studio-header {
@@ -79,6 +80,7 @@
   display: grid;
   grid-template-columns: 230px minmax(500px, 1fr) 270px;
   min-height: 620px;
+  max-width: 100%;
 }
 .group-rail,
 .resolution-panel {
