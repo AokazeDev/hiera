@@ -17,6 +17,7 @@ import { GroupComparison } from "@/components/studio/group-comparison";
 import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
 import { InheritanceGraph } from "@/components/studio/inheritance-graph";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
+import { StudioFeedback } from "@/components/studio/studio-feedback";
 import { UserMembershipEditor } from "@/components/studio/user-membership-editor";
 import type {
   CatalogPermissionDecision,
@@ -60,6 +61,7 @@ type PendingPermissionTransfer = {
 type DraggedPermission = Omit<PendingPermissionTransfer, "targetGroup">;
 type PendingCatalogPermission = { permissionKey: string; targetGroup: string };
 type PermissionProvenance = { key: string; origin: string; inherited: boolean };
+type StudioFeedbackMessage = { id: number; message: string };
 
 export function Studio() {
   const root = useRef<HTMLElement>(null);
@@ -86,6 +88,7 @@ export function Studio() {
   const [workspace, setWorkspace] = useState<
     "editor" | "catalog" | "comparison" | "inheritance"
   >("editor");
+  const [feedback, setFeedback] = useState<StudioFeedbackMessage | null>(null);
   const catalog = new Map(
     authMeReloaded.permissions.map((permission) => [
       permission.node,
@@ -114,6 +117,12 @@ export function Studio() {
     return () => context.revert();
   }, []);
 
+  useEffect(() => {
+    if (!feedback) return;
+    const timeout = window.setTimeout(() => setFeedback(null), 3200);
+    return () => window.clearTimeout(timeout);
+  }, [feedback]);
+
   function importBackup(file: File) {
     const reader = new FileReader();
     reader.onload = () => {
@@ -132,6 +141,7 @@ export function Studio() {
         setPendingCatalogPermission(null);
         setPermissionProvenance(null);
         setActiveContext({});
+        announce(`Backup ${file.name} importado solo en esta sesión.`);
       } catch (error) {
         window.alert(
           `No se pudo leer el backup: ${error instanceof Error ? error.message : "JSON invalido"}`,
@@ -145,6 +155,11 @@ export function Studio() {
     if (!backup || next === backup) return;
     setHistory((current) => recordBackupChange(current, backup, label));
     setBackup(next);
+    announce(`${label}. Cambio aplicado.`);
+  }
+
+  function announce(message: string) {
+    setFeedback((current) => ({ id: (current?.id ?? 0) + 1, message }));
   }
 
   function applyPermissions(
@@ -413,6 +428,7 @@ export function Studio() {
     link.download = "hiera-luckperms-backup.json";
     link.click();
     URL.revokeObjectURL(link.href);
+    announce("Descarga de hiera-luckperms-backup.json iniciada.");
   }
 
   function undo() {
@@ -421,6 +437,7 @@ export function Studio() {
     if (!result) return;
     setBackup(result.backup);
     setHistory(result.history);
+    announce(`Deshecho: ${history.past.at(-1)?.label ?? "último cambio"}.`);
   }
 
   function redo() {
@@ -429,6 +446,7 @@ export function Studio() {
     if (!result) return;
     setBackup(result.backup);
     setHistory(result.history);
+    announce(`Rehecho: ${history.future[0]?.label ?? "último cambio"}.`);
   }
 
   function inspectPermissionOrigin(provenance: PermissionProvenance) {
@@ -438,15 +456,21 @@ export function Studio() {
   }
 
   function selectGroup(groupName: string) {
+    if (groupName === selectedGroup && !selectedUser) return;
     setSelectedGroup(groupName);
     setSelectedUser(null);
     setPermissionProvenance(null);
+    announce(`Grupo ${groupName} seleccionado.`);
   }
 
   function selectUser(userId: string) {
+    if (userId === selectedUser && !selectedGroup) return;
     setSelectedUser(userId);
     setSelectedGroup(null);
     setPermissionProvenance(null);
+    announce(
+      `Usuario ${backup?.users?.[userId]?.username ?? userId} seleccionado.`,
+    );
   }
 
   return (
@@ -516,6 +540,9 @@ export function Studio() {
           }
         />
       </header>
+      {feedback && (
+        <StudioFeedback id={feedback.id} message={feedback.message} />
+      )}
       <section className="studio-intro" data-studio-intro>
         <p className="eyebrow">ESTUDIO</p>
         <h1>El permiso correcto, en el lugar correcto.</h1>
@@ -624,7 +651,6 @@ export function Studio() {
             startPermissionDrag(nodeIndex, sourceGroup)
           }
           onEndPermissionDrag={() => setDraggedPermission(null)}
-          catalog={catalog}
         />
       </section>
     </main>

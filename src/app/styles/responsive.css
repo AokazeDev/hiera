@@ -66,6 +66,10 @@
   .studio-header > div {
     margin-left: auto;
   }
+  .studio-feedback {
+    top: 62px;
+    right: 15px;
+  }
   .workspace-switch button,
   .studio-header .text-button {
     padding: 6px;
