@@ -520,6 +520,13 @@ export function PermissionCanvas({
     Record<string, { x: number; y: number }>
   >({});
   const [fitViewOnInit, setFitViewOnInit] = useState(true);
+  const nodeCache = useRef<{
+    backup: LuckPermsBackup;
+    positions: Record<string, { x: number; y: number }>;
+    selectedGroup: string | null;
+    selectedUser: string | null;
+    nodes: Array<GroupFlowNode | UserFlowNode>;
+  } | null>(null);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("hiera-graph-positions");
@@ -686,11 +693,10 @@ export function PermissionCanvas({
     return {
       id: `group:${groupName}`,
       type: "group",
-      position: dragPositions[`group:${groupName}`] ??
-        positions[`group:${groupName}`] ?? {
-          x: (groupColumns[groupName] ?? index) * groupLaneWidth,
-          y: (groupDepths[groupName] ?? 0) * groupLaneHeight,
-        },
+      position: positions[`group:${groupName}`] ?? {
+        x: (groupColumns[groupName] ?? index) * groupLaneWidth,
+        y: (groupDepths[groupName] ?? 0) * groupLaneHeight,
+      },
       data: {
         groupName,
         permissionCount: permissions.length,
@@ -729,15 +735,11 @@ export function PermissionCanvas({
     return {
       id: `user:${userId}`,
       type: "user",
-      position: dragPositions[`user:${userId}`] ??
-        positions[`user:${userId}`] ?? {
-          x:
-            (groupColumn ?? index % 4) * groupLaneWidth +
-            (primaryGroup ? 0 : 24),
-          y:
-            (maxGroupDepth + 1) * groupLaneHeight +
-            Math.floor(offset / 3) * 220,
-        },
+      position: positions[`user:${userId}`] ?? {
+        x:
+          (groupColumn ?? index % 4) * groupLaneWidth + (primaryGroup ? 0 : 24),
+        y: (maxGroupDepth + 1) * groupLaneHeight + Math.floor(offset / 3) * 220,
+      },
       data: {
         userId,
         displayName: user.username ?? userId,
@@ -771,7 +773,27 @@ export function PermissionCanvas({
       },
     };
   });
-  const nodes = [...groupNodes, ...userNodes];
+  const generatedNodes = [...groupNodes, ...userNodes];
+  if (
+    nodeCache.current?.backup !== backup ||
+    nodeCache.current.positions !== positions ||
+    nodeCache.current.selectedGroup !== selectedGroup ||
+    nodeCache.current.selectedUser !== selectedUser
+  ) {
+    nodeCache.current = {
+      backup,
+      positions,
+      selectedGroup,
+      selectedUser,
+      nodes: generatedNodes,
+    };
+  }
+  const nodes = dragPositions
+    ? nodeCache.current.nodes.map((node) => {
+        const position = dragPositions[node.id];
+        return position ? { ...node, position } : node;
+      })
+    : nodeCache.current.nodes;
   const edges: Edge[] = groupNames.flatMap((groupName) =>
     backup.groups[groupName].nodes.flatMap((node) => {
       if (node.type !== "inheritance" || !node.value) return [];
