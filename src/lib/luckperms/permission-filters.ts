@@ -1,11 +1,11 @@
 import type { LuckPermsNode, PermissionEntry } from "../permissions";
 import type { ResolvedPermission } from "./effective-resolution";
 
-export type PermissionStatusFilter = "all" | "granted" | "denied";
-export type PermissionContextFilter = "all" | "global" | "contextual";
-export type PermissionOriginFilter = "all" | "direct" | "inherited";
+type PermissionStatusFilter = "all" | "granted" | "denied";
+type PermissionContextFilter = "all" | "global" | "contextual";
+type PermissionOriginFilter = "all" | "direct" | "inherited";
 export type PermissionRisk = "safe" | "caution" | "dangerous";
-export type PermissionRiskFilter = "all" | PermissionRisk;
+type PermissionRiskFilter = "all" | PermissionRisk;
 
 export type PermissionFilterState = {
   status: PermissionStatusFilter;

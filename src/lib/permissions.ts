@@ -27,8 +27,8 @@ export type LuckPermsNode = {
   context?: Record<string, string | string[]>;
   [key: string]: unknown;
 };
-export type LuckPermsGroup = { nodes: LuckPermsNode[] };
-export type LuckPermsUser = {
+type LuckPermsGroup = { nodes: LuckPermsNode[] };
+type LuckPermsUser = {
   username?: string;
   primaryGroup?: string;
   nodes: LuckPermsNode[];

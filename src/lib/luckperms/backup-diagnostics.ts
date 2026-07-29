@@ -3,14 +3,14 @@ import { getParents } from "./inheritance";
 
 type NodeOwner = "group" | "user";
 
-export type DuplicatePermissionIssue = {
+type DuplicatePermissionIssue = {
   owner: NodeOwner;
   ownerId: string;
   key: string;
   nodeIndexes: number[];
 };
 
-export type MissingGroupReferenceIssue = {
+type MissingGroupReferenceIssue = {
   owner: NodeOwner;
   ownerId: string;
   groupName: string;
@@ -18,11 +18,11 @@ export type MissingGroupReferenceIssue = {
   nodeIndex?: number;
 };
 
-export type InheritanceCycleIssue = { groups: string[] };
+type InheritanceCycleIssue = { groups: string[] };
 
-export type ContradictoryPermissionIssue = DuplicatePermissionIssue;
+type ContradictoryPermissionIssue = DuplicatePermissionIssue;
 
-export type RepeatedNodeIssue = {
+type RepeatedNodeIssue = {
   owner: NodeOwner;
   ownerId: string;
   type: string;
@@ -30,7 +30,7 @@ export type RepeatedNodeIssue = {
   nodeIndexes: number[];
 };
 
-export type DangerousPermissionIssue = {
+type DangerousPermissionIssue = {
   owner: NodeOwner;
   ownerId: string;
   key: string;

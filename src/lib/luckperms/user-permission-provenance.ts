@@ -3,7 +3,7 @@ import type { PermissionContext } from "./permission-contexts";
 import { buildPermissionProvenanceGraph } from "./permission-provenance";
 import { getUserMemberships } from "./user-memberships";
 
-export type UserPermissionProvenanceNode = {
+type UserPermissionProvenanceNode = {
   id: string;
   label: string;
   kind: "context" | "group" | "user";

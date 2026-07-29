@@ -43,8 +43,7 @@
   background: var(--acid);
   color: var(--night);
 }
-.text-button,
-.icon-button {
+.text-button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -518,8 +517,7 @@
   letter-spacing: -0.045em;
   margin: 0;
 }
-.workspace-title > a,
-.catalog-meta a {
+.workspace-title > a {
   color: #526b10;
   font-size: 12px;
   text-decoration: underline;

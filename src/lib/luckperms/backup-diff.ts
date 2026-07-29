@@ -5,7 +5,7 @@ export type NodeChange = {
   node: LuckPermsNode;
 };
 
-export type FieldChange = {
+type FieldChange = {
   field: string;
   before: unknown;
   after: unknown;

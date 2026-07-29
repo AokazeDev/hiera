@@ -1,6 +1,6 @@
 import type { LuckPermsBackup } from "../permissions";
 
-export type BackupHistoryEntry = {
+type BackupHistoryEntry = {
   backup: LuckPermsBackup;
   label: string;
 };

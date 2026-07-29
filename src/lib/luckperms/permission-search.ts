@@ -1,6 +1,6 @@
 import type { LuckPermsBackup, LuckPermsNode } from "../permissions";
 
-export type PermissionSearchMatch = {
+type PermissionSearchMatch = {
   nodeIndex: number;
   key: string;
   value: boolean;

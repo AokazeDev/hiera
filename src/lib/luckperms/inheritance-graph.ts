@@ -1,16 +1,16 @@
 import type { LuckPermsBackup } from "../permissions";
 import { getParents } from "./inheritance";
 
-export const MAX_VISIBLE_GRAPH_GROUPS = 80;
+const MAX_VISIBLE_GRAPH_GROUPS = 80;
 
-export type InheritanceGraphNode = {
+type InheritanceGraphNode = {
   id: string;
   label: string;
   depth: number;
   missing: boolean;
 };
 
-export type InheritanceGraphEdge = {
+type InheritanceGraphEdge = {
   id: string;
   source: string;
   target: string;

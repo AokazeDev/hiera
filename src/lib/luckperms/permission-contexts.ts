@@ -46,7 +46,7 @@ function hasMatchingPermissionContext(
   );
 }
 
-export function validatePermissionContextUpdate(
+function validatePermissionContextUpdate(
   nodes: LuckPermsNode[],
   nodeIndex: number,
   context: PermissionContext,

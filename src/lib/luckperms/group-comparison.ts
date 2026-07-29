@@ -4,7 +4,7 @@ import {
   type ResolvedPermission,
 } from "./effective-resolution";
 
-export type PermissionDifference<T extends LuckPermsNode> = {
+type PermissionDifference<T extends LuckPermsNode> = {
   key: string;
   context: Array<[string, string]>;
   left?: T;

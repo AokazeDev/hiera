@@ -2,7 +2,7 @@ import type { LuckPermsBackup } from "../permissions";
 
 export type PermissionBatchDecision = "grant" | "deny" | "remove";
 
-export type PermissionBatchTargetPreview = {
+type PermissionBatchTargetPreview = {
   groupName: string;
   additions: string[];
   updates: string[];
