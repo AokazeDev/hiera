@@ -29,6 +29,11 @@ type ResolutionPanelProps = {
   onAddInheritance: (parentName: string) => void;
   onRemoveInheritance: (nodeIndex: number) => void;
   onPreparePermissionTransfer: (sourceGroup: string, nodeIndex: number) => void;
+  onInspectPermissionOrigin: (permission: {
+    key: string;
+    origin: string;
+    inherited: boolean;
+  }) => void;
   onStartPermissionDrag: (sourceGroup: string, nodeIndex: number) => void;
   onEndPermissionDrag: () => void;
   catalog?: Map<string, PermissionEntry>;
@@ -45,6 +50,7 @@ export function ResolutionPanel({
   onAddInheritance,
   onRemoveInheritance,
   onPreparePermissionTransfer,
+  onInspectPermissionOrigin,
   onStartPermissionDrag,
   onEndPermissionDrag,
   catalog,
@@ -98,6 +104,19 @@ export function ResolutionPanel({
                 <small>{node.inherited ? node.origin : "directo"}</small>
                 {groupName && (
                   <>
+                    <button
+                      type="button"
+                      className="effective-permission-origin"
+                      onClick={() =>
+                        onInspectPermissionOrigin({
+                          key: node.key,
+                          origin: node.origin,
+                          inherited: node.inherited,
+                        })
+                      }
+                    >
+                      Ver origen
+                    </button>
                     <span
                       className="permission-drag-handle"
                       draggable

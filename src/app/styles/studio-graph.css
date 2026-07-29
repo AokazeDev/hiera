@@ -79,6 +79,35 @@
   font-size: 12px;
   line-height: 1.45;
 }
+.permission-provenance-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  list-style: none;
+  color: var(--muted);
+  font:
+    11px / 1.45 var(--font-geist-mono),
+    monospace;
+}
+.permission-provenance-list li {
+  display: inline;
+}
+.permission-provenance-list button {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  padding: 0;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.permission-provenance-list button:hover {
+  color: #526b10;
+}
 .inheritance-graph-empty {
   display: grid;
   place-content: start;

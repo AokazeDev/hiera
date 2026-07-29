@@ -56,6 +56,7 @@ type PendingPermissionTransfer = {
 
 type DraggedPermission = Omit<PendingPermissionTransfer, "targetGroup">;
 type PendingCatalogPermission = { permissionKey: string; targetGroup: string };
+type PermissionProvenance = { key: string; origin: string; inherited: boolean };
 
 export function Studio() {
   const root = useRef<HTMLElement>(null);
@@ -76,6 +77,8 @@ export function Studio() {
   >(null);
   const [pendingCatalogPermission, setPendingCatalogPermission] =
     useState<PendingCatalogPermission | null>(null);
+  const [permissionProvenance, setPermissionProvenance] =
+    useState<PermissionProvenance | null>(null);
   const [workspace, setWorkspace] = useState<
     "editor" | "catalog" | "comparison" | "inheritance"
   >("editor");
@@ -123,6 +126,7 @@ export function Studio() {
         setDraggedPermission(null);
         setDraggedCatalogPermission(null);
         setPendingCatalogPermission(null);
+        setPermissionProvenance(null);
       } catch (error) {
         window.alert(
           `No se pudo leer el backup: ${error instanceof Error ? error.message : "JSON invalido"}`,
@@ -403,6 +407,24 @@ export function Studio() {
     setHistory(result.history);
   }
 
+  function inspectPermissionOrigin(provenance: PermissionProvenance) {
+    if (!selectedGroup) return;
+    setPermissionProvenance(provenance);
+    setWorkspace("inheritance");
+  }
+
+  function selectGroup(groupName: string) {
+    setSelectedGroup(groupName);
+    setSelectedUser(null);
+    setPermissionProvenance(null);
+  }
+
+  function selectUser(userId: string) {
+    setSelectedUser(userId);
+    setSelectedGroup(null);
+    setPermissionProvenance(null);
+  }
+
   return (
     <main ref={root} className="studio-shell">
       <header className="studio-header">
@@ -483,14 +505,8 @@ export function Studio() {
           backup={backup}
           selectedGroup={selectedGroup}
           selectedUser={selectedUser}
-          onSelectGroup={(groupName) => {
-            setSelectedGroup(groupName);
-            setSelectedUser(null);
-          }}
-          onSelectUser={(userId) => {
-            setSelectedUser(userId);
-            setSelectedGroup(null);
-          }}
+          onSelectGroup={selectGroup}
+          onSelectUser={selectUser}
           onImport={() => input.current?.click()}
           onCreateGroup={createNewGroup}
           onRenameGroup={renameSelectedGroup}
@@ -511,14 +527,12 @@ export function Studio() {
           <InheritanceGraph
             backup={backup}
             groupName={selectedGroup}
-            onSelectGroup={(groupName) => {
-              setSelectedGroup(groupName);
-              setSelectedUser(null);
-            }}
+            onSelectGroup={selectGroup}
             draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
             draggingCatalogPermission={Boolean(draggedCatalogPermission)}
             onDropPermission={dropPermissionOnGroup}
             onDropCatalogPermission={dropCatalogPermissionOnGroup}
+            permissionProvenance={permissionProvenance}
           />
         ) : workspace === "editor" && selectedUser ? (
           <UserMembershipEditor
@@ -571,10 +585,11 @@ export function Studio() {
           history={history}
           onUndo={undo}
           onRedo={redo}
-          onSelectGroup={setSelectedGroup}
+          onSelectGroup={selectGroup}
           onAddInheritance={addInheritance}
           onRemoveInheritance={removeInheritance}
           onPreparePermissionTransfer={prepareGroupPermissionTransfer}
+          onInspectPermissionOrigin={inspectPermissionOrigin}
           onStartPermissionDrag={(sourceGroup, nodeIndex) =>
             startPermissionDrag(nodeIndex, sourceGroup)
           }

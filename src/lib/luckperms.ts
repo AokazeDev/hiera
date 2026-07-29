@@ -12,6 +12,7 @@ export * from "./luckperms/node-inspection";
 export * from "./luckperms/permission-batches";
 export * from "./luckperms/permission-filters";
 export * from "./luckperms/permission-grouping";
+export * from "./luckperms/permission-provenance";
 export * from "./luckperms/permission-search";
 export * from "./luckperms/permission-sorting";
 export * from "./luckperms/permission-transfers";

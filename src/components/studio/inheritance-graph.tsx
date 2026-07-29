@@ -12,7 +12,10 @@ import {
 } from "@xyflow/react";
 import { Info, TriangleAlert } from "lucide-react";
 import { useState } from "react";
-import { buildInheritanceGraph } from "@/lib/luckperms";
+import {
+  buildInheritanceGraph,
+  buildPermissionProvenanceGraph,
+} from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
 type InheritanceGraphProps = {
@@ -23,6 +26,11 @@ type InheritanceGraphProps = {
   draggingCatalogPermission: boolean;
   onDropPermission: (groupName: string) => void;
   onDropCatalogPermission: (groupName: string) => void;
+  permissionProvenance: {
+    key: string;
+    origin: string;
+    inherited: boolean;
+  } | null;
 };
 
 type GraphNodeData = {
@@ -86,9 +94,18 @@ export function InheritanceGraph({
   draggingCatalogPermission,
   onDropPermission,
   onDropCatalogPermission,
+  permissionProvenance,
 }: InheritanceGraphProps) {
   const graph =
-    backup && groupName ? buildInheritanceGraph(backup, groupName) : null;
+    backup && groupName
+      ? permissionProvenance
+        ? buildPermissionProvenanceGraph(
+            backup,
+            groupName,
+            permissionProvenance.origin,
+          )
+        : buildInheritanceGraph(backup, groupName)
+      : null;
 
   if (!backup || !groupName || !graph) {
     return (
@@ -133,15 +150,23 @@ export function InheritanceGraph({
     >
       <header className="workspace-title">
         <div>
-          <h2 id="inheritance-graph-title">Herencias de {groupName}</h2>
+          <h2 id="inheritance-graph-title">
+            {permissionProvenance
+              ? `Procedencia de ${permissionProvenance.key}`
+              : `Herencias de ${groupName}`}
+          </h2>
           <p className="editor-intro">
-            Las conexiones salen del grupo que hereda hacia su grupo padre. Usa
-            los controles para acercar, alejar o reencuadrar el mapa. Mientras
-            arrastras un permiso desde el editor o catálogo, suéltalo sobre un
-            grupo visible para revisar la operación.
+            {permissionProvenance
+              ? permissionProvenance.inherited
+                ? `Esta es la ruta activa desde ${groupName} hasta el grupo que define directamente el permiso.`
+                : `${groupName} define este permiso directamente; no interviene una herencia.`
+              : "Las conexiones salen del grupo que hereda hacia su grupo padre. Usa los controles para acercar, alejar o reencuadrar el mapa. Mientras arrastras un permiso desde el editor o catálogo, suéltalo sobre un grupo visible para revisar la operación."}
           </p>
         </div>
-        <p className="editor-summary">{graph.nodes.length} grupos visibles</p>
+        <p className="editor-summary">
+          {graph.nodes.length}{" "}
+          {permissionProvenance ? "grupos en la ruta" : "grupos visibles"}
+        </p>
       </header>
       <div className="inheritance-graph-canvas">
         <ReactFlow
@@ -164,10 +189,27 @@ export function InheritanceGraph({
           <Controls showInteractive={false} />
         </ReactFlow>
       </div>
+      {permissionProvenance && graph.nodes.length > 0 && (
+        <ol
+          className="permission-provenance-list"
+          aria-label="Ruta textual de procedencia"
+        >
+          {graph.nodes.map((node, index) => (
+            <li key={node.id}>
+              <button type="button" onClick={() => onSelectGroup(node.id)}>
+                {node.label}
+              </button>
+              {index < graph.nodes.length - 1 && (
+                <span aria-hidden="true"> hereda de </span>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
       <p className="inheritance-graph-note">
-        El mapa muestra solo la línea de herencia activa para evitar duplicar el
-        estudio. El editor, el catálogo y la lista de herencias directas
-        permanecen disponibles como alternativa completa de teclado.
+        {permissionProvenance
+          ? "La ruta textual permite revisar y navegar la misma procedencia sin depender del canvas."
+          : "El mapa muestra solo la línea de herencia activa para evitar duplicar el estudio. El editor, el catálogo y la lista de herencias directas permanecen disponibles como alternativa completa de teclado."}
       </p>
     </section>
   );
