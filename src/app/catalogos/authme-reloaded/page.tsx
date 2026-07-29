@@ -40,15 +40,15 @@ export default function AuthMeCatalogPage() {
         <h1>{authMeReloaded.name}</h1>
         <p className="document-lede">{authMeReloaded.description}</p>
         <dl className="catalog-facts">
-          <div>
+          <div className="catalog-fact">
             <dt>Versión documental</dt>
             <dd>{authMeReloaded.version}</dd>
           </div>
-          <div>
+          <div className="catalog-fact">
             <dt>Actualizado</dt>
             <dd>{authMeReloaded.updatedAt}</dd>
           </div>
-          <div>
+          <div className="catalog-fact">
             <dt>Permisos registrados</dt>
             <dd>{authMeReloaded.permissions.length}</dd>
           </div>

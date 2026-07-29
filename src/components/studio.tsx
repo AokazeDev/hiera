@@ -651,6 +651,10 @@ export function Studio() {
               draggingCatalogPermission={Boolean(draggedCatalogPermission)}
               onDropPermission={dropPermissionOnGroup}
               onDropCatalogPermission={dropCatalogPermissionOnGroup}
+              onStartGroupDrag={(sourceGroup, nodeIndex) =>
+                startPermissionDrag(nodeIndex, sourceGroup)
+              }
+              onEndGroupDrag={() => setDraggedPermission(null)}
               permissionProvenance={permissionProvenance}
             />
           ) : workspace === "editor" && selectedUser ? (

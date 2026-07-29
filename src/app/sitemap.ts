@@ -1,6 +1,12 @@
 import type { MetadataRoute } from "next";
 
-const routes = ["", "/studio", "/guia/permisos", "/catalogos/authme-reloaded"];
+const routes = [
+  "",
+  "/studio",
+  "/guia/permisos",
+  "/catalogos",
+  "/catalogos/authme-reloaded",
+];
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return routes.map((route) => ({

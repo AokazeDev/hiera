@@ -164,3 +164,35 @@
 .inheritance-graph-empty p {
   margin: 0;
 }
+.permission-graph-node {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  width: 190px;
+  overflow: hidden;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  background: #f7f5ee;
+  color: var(--ink);
+  text-align: left;
+  cursor: grab;
+  font-size: 10px;
+}
+
+.permission-graph-node:active {
+  cursor: grabbing;
+}
+.permission-graph-node > span {
+  font-weight: 800;
+}
+.permission-graph-node.is-granted > span {
+  color: #4f7004;
+}
+.permission-graph-node.is-denied > span {
+  color: #9a3636;
+}
+.permission-graph-node code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -251,6 +251,12 @@
   }
 }
 @media (max-width: 760px) {
+  .catalog-directory-grid {
+    grid-template-columns: 1fr;
+  }
+  .catalog-detail-dialog dl {
+    grid-template-columns: 1fr;
+  }
   .permission-primer {
     grid-template-columns: 1fr;
     gap: 48px;

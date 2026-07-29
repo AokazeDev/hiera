@@ -31,6 +31,8 @@ type InheritanceGraphProps = {
   draggingCatalogPermission: boolean;
   onDropPermission: (groupName: string) => void;
   onDropCatalogPermission: (groupName: string) => void;
+  onStartGroupDrag: (groupName: string, nodeIndex: number) => void;
+  onEndGroupDrag: () => void;
   permissionProvenance: {
     key: string;
     origin: string;
@@ -49,6 +51,15 @@ type GraphNodeData = {
   draggingCatalogPermission: boolean;
   onDropPermission: (groupName: string) => void;
   onDropCatalogPermission: (groupName: string) => void;
+};
+
+type PermissionGraphNodeData = {
+  label: string;
+  value: boolean;
+  groupName: string;
+  nodeIndex: number;
+  onStartGroupDrag: (groupName: string, nodeIndex: number) => void;
+  onEndGroupDrag: () => void;
 };
 
 function GroupGraphNode({ data }: NodeProps<Node<GraphNodeData>>) {
@@ -93,10 +104,38 @@ function GroupGraphNode({ data }: NodeProps<Node<GraphNodeData>>) {
 
 const nodeTypes = { group: GroupGraphNode };
 
+function PermissionGraphNode({
+  data,
+}: NodeProps<Node<PermissionGraphNodeData>>) {
+  return (
+    <button
+      type="button"
+      className={`permission-graph-node ${data.value ? "is-granted" : "is-denied"}`}
+      draggable
+      onDragStart={(event) => {
+        event.dataTransfer.effectAllowed = "copyMove";
+        event.dataTransfer.setData("text/plain", data.label);
+        data.onStartGroupDrag(data.groupName, data.nodeIndex);
+      }}
+      onDragEnd={data.onEndGroupDrag}
+      title={`Arrastrar ${data.label} desde ${data.groupName}`}
+    >
+      <Handle type="target" position={Position.Left} isConnectable={false} />
+      <span aria-hidden="true">{data.value ? "+" : "−"}</span>
+      <code>{data.label}</code>
+      <Handle type="source" position={Position.Right} isConnectable={false} />
+    </button>
+  );
+}
+
 type ResolutionGraphNodeData = {
   label: string;
   kind: "context" | "user";
 };
+
+type GraphFlowNode = Node<
+  GraphNodeData | ResolutionGraphNodeData | PermissionGraphNodeData
+>;
 
 function ResolutionGraphNode({
   data,
@@ -114,6 +153,7 @@ function ResolutionGraphNode({
 
 const resolutionNodeTypes = {
   group: GroupGraphNode,
+  permission: PermissionGraphNode,
   resolution: ResolutionGraphNode,
 };
 
@@ -127,6 +167,8 @@ export function InheritanceGraph({
   draggingCatalogPermission,
   onDropPermission,
   onDropCatalogPermission,
+  onStartGroupDrag,
+  onEndGroupDrag,
   permissionProvenance,
 }: InheritanceGraphProps) {
   const root = useRef<HTMLElement>(null);
@@ -253,22 +295,24 @@ export function InheritanceGraph({
   }
 
   const rows = new Map<number, number>();
-  const nodes: Node<GraphNodeData | ResolutionGraphNodeData>[] =
-    graph.nodes.map((node) => {
+  const nodes: GraphFlowNode[] = graph.nodes.flatMap(
+    (node): GraphFlowNode[] => {
       const row = rows.get(node.depth) ?? 0;
       rows.set(node.depth, row + 1);
       if ("kind" in node && node.kind !== "group") {
-        return {
-          id: node.id,
-          type: "resolution",
-          position: { x: node.depth * 250, y: row * 100 },
-          data: { label: node.label, kind: node.kind },
-          draggable: false,
-          selectable: false,
-          focusable: false,
-        };
+        return [
+          {
+            id: node.id,
+            type: "resolution",
+            position: { x: node.depth * 250, y: row * 100 },
+            data: { label: node.label, kind: node.kind },
+            draggable: false,
+            selectable: false,
+            focusable: false,
+          } as GraphFlowNode,
+        ];
       }
-      return {
+      const groupNode: GraphFlowNode = {
         id: node.id,
         type: "group",
         position: { x: node.depth * 250, y: row * 100 },
@@ -288,13 +332,57 @@ export function InheritanceGraph({
         },
         selectable: !("missing" in node && node.missing),
       };
-    });
-  const edges: Edge[] = graph.edges.map((edge) => ({
-    ...edge,
-    type: "smoothstep",
-    className: edge.id === traversedEdge ? "is-traversed" : undefined,
-    interactionWidth: 0,
-  }));
+      if (permissionProvenance || !backup.groups[node.label])
+        return [groupNode];
+      const permissionNodes = backup.groups[node.label].nodes
+        .map((permission, nodeIndex) => ({ permission, nodeIndex }))
+        .filter(({ permission }) => permission.type === "permission")
+        .slice(0, 10)
+        .map(({ permission, nodeIndex }, permissionRow) => ({
+          id: `permission:${node.label}:${nodeIndex}`,
+          type: "permission",
+          position: {
+            x: node.depth * 250 + 205,
+            y: row * 100 + permissionRow * 38,
+          },
+          data: {
+            label: permission.key,
+            value: permission.value,
+            groupName: node.label,
+            nodeIndex,
+            onStartGroupDrag,
+            onEndGroupDrag,
+          },
+          draggable: false,
+          selectable: false,
+          focusable: false,
+        }));
+      return [groupNode, ...(permissionNodes as GraphFlowNode[])];
+    },
+  );
+  const edges: Edge[] = [
+    ...graph.edges.map((edge) => ({
+      ...edge,
+      type: "smoothstep",
+      className: edge.id === traversedEdge ? "is-traversed" : undefined,
+      interactionWidth: 0,
+    })),
+    ...(!permissionProvenance
+      ? graph.nodes.flatMap((node) =>
+          (backup.groups[node.label]?.nodes ?? [])
+            .map((permission, nodeIndex) => ({ permission, nodeIndex }))
+            .filter(({ permission }) => permission.type === "permission")
+            .slice(0, 10)
+            .map(({ nodeIndex }) => ({
+              id: `${node.label}->permission:${nodeIndex}`,
+              source: node.id,
+              target: `permission:${node.label}:${nodeIndex}`,
+              type: "smoothstep",
+              interactionWidth: 0,
+            })),
+        )
+      : []),
+  ];
 
   return (
     <section
@@ -335,7 +423,11 @@ export function InheritanceGraph({
           }
           nodes={nodes}
           edges={edges}
-          nodeTypes={isUserProvenance ? resolutionNodeTypes : nodeTypes}
+          nodeTypes={
+            isUserProvenance || !permissionProvenance
+              ? resolutionNodeTypes
+              : nodeTypes
+          }
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable

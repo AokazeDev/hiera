@@ -259,10 +259,13 @@ export default function Home() {
 
         <section className="closing" data-reveal-section>
           <p className="eyebrow">EL EDITOR ES EL PRODUCTO</p>
-          <h2>Trabaja con cualquier plugin. Usa los catálogos cuando ayuden.</h2>
+          <h2>
+            Trabaja con cualquier plugin. Usa los catálogos cuando ayuden.
+          </h2>
           <p>
             Permisos personalizados, herencias, contextos y procedencia primero.
-            Las fuentes documentales son atajos verificables, no límites del editor.
+            Las fuentes documentales son atajos verificables, no límites del
+            editor.
           </p>
           <Link
             className="primary-action"
