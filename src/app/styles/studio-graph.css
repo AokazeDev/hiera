@@ -39,10 +39,18 @@
   background: #f7f5ee;
   color: var(--ink);
   padding: 9px 11px;
+  cursor: pointer;
   font:
     12px var(--font-geist-mono),
     monospace;
   box-shadow: 3px 3px 0 #d6d6c9;
+}
+.inheritance-graph-node:disabled {
+  cursor: not-allowed;
+}
+.inheritance-graph-node:focus-visible {
+  outline: 2px solid #526b10;
+  outline-offset: 3px;
 }
 .inheritance-graph-node.is-selected {
   border-color: #526b10;
@@ -53,6 +61,11 @@
   border-color: #a76868;
   background: #f0dede;
   color: #7a2525;
+}
+.inheritance-graph-node.is-drop-target {
+  border-color: #526b10;
+  outline: 2px solid #dce9a7;
+  outline-offset: 3px;
 }
 .inheritance-graph-node .react-flow__handle {
   width: 6px;

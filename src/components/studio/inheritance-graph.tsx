@@ -11,6 +11,7 @@ import {
   ReactFlow,
 } from "@xyflow/react";
 import { Info, TriangleAlert } from "lucide-react";
+import { useState } from "react";
 import { buildInheritanceGraph } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
@@ -18,24 +19,60 @@ type InheritanceGraphProps = {
   backup: LuckPermsBackup | null;
   groupName: string | null;
   onSelectGroup: (groupName: string) => void;
+  draggingPermissionFrom: string | null;
+  draggingCatalogPermission: boolean;
+  onDropPermission: (groupName: string) => void;
+  onDropCatalogPermission: (groupName: string) => void;
 };
 
 type GraphNodeData = {
   label: string;
   missing: boolean;
   selected: boolean;
+  onSelectGroup: (groupName: string) => void;
+  draggingPermissionFrom: string | null;
+  draggingCatalogPermission: boolean;
+  onDropPermission: (groupName: string) => void;
+  onDropCatalogPermission: (groupName: string) => void;
 };
 
 function GroupGraphNode({ data }: NodeProps<Node<GraphNodeData>>) {
+  const [isDropTarget, setIsDropTarget] = useState(false);
+  const acceptsDrop =
+    !data.missing &&
+    (data.draggingCatalogPermission ||
+      (data.draggingPermissionFrom !== null &&
+        data.draggingPermissionFrom !== data.label));
+
   return (
-    <div
-      className={`inheritance-graph-node${data.selected ? " is-selected" : ""}${data.missing ? " is-missing" : ""}`}
+    <button
+      type="button"
+      className={`inheritance-graph-node${data.selected ? " is-selected" : ""}${data.missing ? " is-missing" : ""}${isDropTarget ? " is-drop-target" : ""}`}
+      disabled={data.missing}
+      onClick={() => data.onSelectGroup(data.label)}
+      onDragOver={(event) => {
+        if (!acceptsDrop) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = "copy";
+        setIsDropTarget(true);
+      }}
+      onDragLeave={() => setIsDropTarget(false)}
+      onDrop={(event) => {
+        event.preventDefault();
+        setIsDropTarget(false);
+        if (!acceptsDrop) return;
+        if (data.draggingCatalogPermission) {
+          data.onDropCatalogPermission(data.label);
+        } else {
+          data.onDropPermission(data.label);
+        }
+      }}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
       {data.missing && <TriangleAlert size={13} aria-hidden="true" />}
       <span>{data.label}</span>
       <Handle type="source" position={Position.Right} isConnectable={false} />
-    </div>
+    </button>
   );
 }
 
@@ -45,6 +82,10 @@ export function InheritanceGraph({
   backup,
   groupName,
   onSelectGroup,
+  draggingPermissionFrom,
+  draggingCatalogPermission,
+  onDropPermission,
+  onDropCatalogPermission,
 }: InheritanceGraphProps) {
   const graph =
     backup && groupName ? buildInheritanceGraph(backup, groupName) : null;
@@ -70,6 +111,11 @@ export function InheritanceGraph({
         label: node.label,
         missing: node.missing,
         selected: node.id === groupName,
+        onSelectGroup,
+        draggingPermissionFrom,
+        draggingCatalogPermission,
+        onDropPermission,
+        onDropCatalogPermission,
       },
       selectable: !node.missing,
     };
@@ -90,7 +136,9 @@ export function InheritanceGraph({
           <h2 id="inheritance-graph-title">Herencias de {groupName}</h2>
           <p className="editor-intro">
             Las conexiones salen del grupo que hereda hacia su grupo padre. Usa
-            los controles para acercar, alejar o reencuadrar el mapa.
+            los controles para acercar, alejar o reencuadrar el mapa. Mientras
+            arrastras un permiso desde el editor o catálogo, suéltalo sobre un
+            grupo visible para revisar la operación.
           </p>
         </div>
         <p className="editor-summary">{graph.nodes.length} grupos visibles</p>
@@ -117,8 +165,9 @@ export function InheritanceGraph({
         </ReactFlow>
       </div>
       <p className="inheritance-graph-note">
-        El editor y la lista de herencias directas permanecen disponibles en la
-        vista Editor como alternativa completa de teclado.
+        El mapa muestra solo la línea de herencia activa para evitar duplicar el
+        estudio. El editor, el catálogo y la lista de herencias directas
+        permanecen disponibles como alternativa completa de teclado.
       </p>
     </section>
   );

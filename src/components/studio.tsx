@@ -493,6 +493,10 @@ export function Studio() {
               setSelectedGroup(groupName);
               setSelectedUser(null);
             }}
+            draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
+            draggingCatalogPermission={Boolean(draggedCatalogPermission)}
+            onDropPermission={dropPermissionOnGroup}
+            onDropCatalogPermission={dropCatalogPermissionOnGroup}
           />
         ) : workspace === "editor" && selectedUser ? (
           <UserMembershipEditor
