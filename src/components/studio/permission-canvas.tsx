@@ -898,12 +898,21 @@ export function PermissionCanvas({
               return next;
             });
           }}
-          onNodeDrag={(_, node) =>
-            setDragPositions((current) => ({
-              ...current,
-              [node.id]: node.position,
-            }))
-          }
+          onNodesChange={(changes) => {
+            const positionChanges = changes.filter(
+              (change) => change.type === "position" && change.position,
+            );
+            if (!positionChanges.length) return;
+            setDragPositions((current) => {
+              const next = { ...current };
+              for (const change of positionChanges) {
+                if (change.type === "position" && change.position) {
+                  next[change.id] = change.position;
+                }
+              }
+              return next;
+            });
+          }}
           onEdgeClick={(_, edge) => {
             const [kindAndSource, target] = edge.id.split("->");
             const [kind, source] = kindAndSource.split(":");
