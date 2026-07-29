@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionNodeEditor } from "@/components/studio/permission-node-editor";
 import { PermissionTransferPanel } from "@/components/studio/permission-transfer-panel";
@@ -18,6 +17,11 @@ type GroupPermissionEditorProps = {
     targetGroup: string,
     mode: PermissionTransferMode,
   ) => void;
+  transferRequest: { nodeIndex: number; targetGroup: string | null } | null;
+  onPrepareTransfer: (nodeIndex: number) => void;
+  onStartDrag: (nodeIndex: number) => void;
+  onEndDrag: () => void;
+  onCloseTransfer: () => void;
   catalog?: Map<string, PermissionEntry>;
 };
 
@@ -28,12 +32,14 @@ export function GroupPermissionEditor({
   onSetValue,
   onRemove,
   onTransfer,
+  transferRequest,
+  onPrepareTransfer,
+  onStartDrag,
+  onEndDrag,
+  onCloseTransfer,
   catalog,
 }: GroupPermissionEditorProps) {
   const group = backup && groupName ? backup.groups[groupName] : null;
-  const [transferNodeIndex, setTransferNodeIndex] = useState<number | null>(
-    null,
-  );
 
   return (
     <section className="workspace" aria-labelledby="group-editor-title">
@@ -51,7 +57,9 @@ export function GroupPermissionEditor({
           </div>
           <p className="editor-intro">
             Los cambios solo afectan a este grupo. Los nodos con contexto se
-            conservan al conceder o denegar un permiso existente.
+            conservan al conceder o denegar un permiso existente. Arrastra el
+            control de puntos hacia otro grupo o usa "Copiar o mover" con
+            teclado.
           </p>
           <PermissionNodeEditor
             nodes={group.nodes}
@@ -59,19 +67,22 @@ export function GroupPermissionEditor({
             onAdd={onAdd}
             onSetValue={onSetValue}
             onRemove={onRemove}
-            onPrepareTransfer={setTransferNodeIndex}
+            onPrepareTransfer={onPrepareTransfer}
+            onStartDrag={onStartDrag}
+            onEndDrag={onEndDrag}
             catalog={catalog}
           />
           <PermissionTransferPanel
+            key={`${transferRequest?.nodeIndex ?? "none"}-${transferRequest?.targetGroup ?? "none"}`}
             backup={backup}
             sourceGroup={groupName}
-            sourceNodeIndex={transferNodeIndex}
-            onClose={() => setTransferNodeIndex(null)}
+            sourceNodeIndex={transferRequest?.nodeIndex ?? null}
+            initialTargetGroup={transferRequest?.targetGroup ?? null}
+            onClose={onCloseTransfer}
             onTransfer={(targetGroup, mode) => {
-              if (transferNodeIndex !== null) {
-                onTransfer(transferNodeIndex, targetGroup, mode);
+              if (transferRequest) {
+                onTransfer(transferRequest.nodeIndex, targetGroup, mode);
               }
-              setTransferNodeIndex(null);
             }}
           />
           <NodeInspector

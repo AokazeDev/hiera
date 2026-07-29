@@ -17,6 +17,8 @@ type BackupRailProps = {
   onCreateGroup: (groupName: string) => void;
   onRenameGroup: (groupName: string) => void;
   onDeleteGroup: () => void;
+  draggingPermissionFrom: string | null;
+  onDropPermission: (groupName: string) => void;
 };
 
 export function BackupRail({
@@ -29,8 +31,11 @@ export function BackupRail({
   onCreateGroup,
   onRenameGroup,
   onDeleteGroup,
+  draggingPermissionFrom,
+  onDropPermission,
 }: BackupRailProps) {
   const [permissionSearch, setPermissionSearch] = useState("");
+  const [dropTarget, setDropTarget] = useState<string | null>(null);
   const searchResults = backup
     ? searchPermissions(backup, permissionSearch)
     : [];
@@ -111,8 +116,29 @@ export function BackupRail({
               <button
                 type="button"
                 key={name}
-                className={`group-row ${name === selectedGroup ? "is-active" : ""}`}
+                className={`group-row ${name === selectedGroup ? "is-active" : ""} ${name === dropTarget ? "is-drop-target" : ""}`}
                 onClick={() => onSelectGroup(name)}
+                onDragOver={(event) => {
+                  if (
+                    !draggingPermissionFrom ||
+                    draggingPermissionFrom === name
+                  )
+                    return;
+                  event.preventDefault();
+                  event.dataTransfer.dropEffect = "copy";
+                  setDropTarget(name);
+                }}
+                onDragLeave={() => setDropTarget(null)}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  setDropTarget(null);
+                  if (
+                    draggingPermissionFrom &&
+                    draggingPermissionFrom !== name
+                  ) {
+                    onDropPermission(name);
+                  }
+                }}
               >
                 <span className="group-mark" />
                 <span>{name}</span>

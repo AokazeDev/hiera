@@ -22,6 +22,8 @@ type PermissionNodeEditorProps = {
   onSetValue: (nodeIndex: number, value: boolean) => void;
   onRemove: (nodeIndex: number) => void;
   onPrepareTransfer?: (nodeIndex: number) => void;
+  onStartDrag?: (nodeIndex: number) => void;
+  onEndDrag?: () => void;
   catalog?: Map<string, PermissionEntry>;
 };
 
@@ -32,6 +34,8 @@ export function PermissionNodeEditor({
   onSetValue,
   onRemove,
   onPrepareTransfer,
+  onStartDrag,
+  onEndDrag,
   catalog,
 }: PermissionNodeEditorProps) {
   const [key, setKey] = useState("");
@@ -126,6 +130,8 @@ export function PermissionNodeEditor({
           onSetValue={onSetValue}
           onRemove={onRemove}
           onPrepareTransfer={onPrepareTransfer}
+          onStartDrag={onStartDrag}
+          onEndDrag={onEndDrag}
         />
       ) : (
         <section

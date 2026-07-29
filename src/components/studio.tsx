@@ -44,6 +44,14 @@ import {
 } from "@/lib/luckperms";
 import { authMeReloaded, type LuckPermsBackup } from "@/lib/permissions";
 
+type PendingPermissionTransfer = {
+  sourceGroup: string;
+  nodeIndex: number;
+  targetGroup: string | null;
+};
+
+type DraggedPermission = Omit<PendingPermissionTransfer, "targetGroup">;
+
 export function Studio() {
   const root = useRef<HTMLElement>(null);
   const input = useRef<HTMLInputElement>(null);
@@ -54,6 +62,10 @@ export function Studio() {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [history, setHistory] = useState(emptyBackupHistory);
+  const [pendingTransfer, setPendingTransfer] =
+    useState<PendingPermissionTransfer | null>(null);
+  const [draggedPermission, setDraggedPermission] =
+    useState<DraggedPermission | null>(null);
   const [workspace, setWorkspace] = useState<
     "editor" | "catalog" | "comparison" | "inheritance"
   >("editor");
@@ -97,6 +109,8 @@ export function Studio() {
         setSelectedGroup(Object.keys(parsed.groups)[0] ?? null);
         setSelectedUser(null);
         setHistory(emptyBackupHistory);
+        setPendingTransfer(null);
+        setDraggedPermission(null);
       } catch (error) {
         window.alert(
           `No se pudo leer el backup: ${error instanceof Error ? error.message : "JSON invalido"}`,
@@ -164,6 +178,27 @@ export function Studio() {
       ),
       `${mode === "copy" ? "Copiar" : "Mover"} ${node.key} de ${selectedGroup} a ${targetGroup}`,
     );
+    setPendingTransfer(null);
+  }
+
+  function preparePermissionTransfer(nodeIndex: number) {
+    if (!selectedGroup) return;
+    setPendingTransfer({
+      sourceGroup: selectedGroup,
+      nodeIndex,
+      targetGroup: null,
+    });
+  }
+
+  function startPermissionDrag(nodeIndex: number) {
+    if (!selectedGroup) return;
+    setDraggedPermission({ sourceGroup: selectedGroup, nodeIndex });
+  }
+
+  function dropPermissionOnGroup(targetGroup: string) {
+    if (!draggedPermission) return;
+    setPendingTransfer({ ...draggedPermission, targetGroup });
+    setDraggedPermission(null);
   }
 
   function addInheritance(parentName: string) {
@@ -382,6 +417,8 @@ export function Studio() {
           onCreateGroup={createNewGroup}
           onRenameGroup={renameSelectedGroup}
           onDeleteGroup={deleteSelectedGroup}
+          draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
+          onDropPermission={dropPermissionOnGroup}
         />
         {workspace === "comparison" ? (
           <GroupComparison backup={backup} initialGroup={selectedGroup} />
@@ -414,6 +451,15 @@ export function Studio() {
             onSetValue={setPermissionValue}
             onRemove={removePermission}
             onTransfer={transferPermission}
+            transferRequest={
+              pendingTransfer?.sourceGroup === selectedGroup
+                ? pendingTransfer
+                : null
+            }
+            onPrepareTransfer={preparePermissionTransfer}
+            onStartDrag={startPermissionDrag}
+            onEndDrag={() => setDraggedPermission(null)}
+            onCloseTransfer={() => setPendingTransfer(null)}
             catalog={catalog}
           />
         ) : (

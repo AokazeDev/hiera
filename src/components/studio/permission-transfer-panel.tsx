@@ -13,6 +13,7 @@ type PermissionTransferPanelProps = {
   backup: LuckPermsBackup;
   sourceGroup: string;
   sourceNodeIndex: number | null;
+  initialTargetGroup: string | null;
   onTransfer: (targetGroup: string, mode: PermissionTransferMode) => void;
   onClose: () => void;
 };
@@ -21,10 +22,11 @@ export function PermissionTransferPanel({
   backup,
   sourceGroup,
   sourceNodeIndex,
+  initialTargetGroup,
   onTransfer,
   onClose,
 }: PermissionTransferPanelProps) {
-  const [targetGroup, setTargetGroup] = useState("");
+  const [targetGroup, setTargetGroup] = useState(initialTargetGroup ?? "");
   const [mode, setMode] = useState<PermissionTransferMode>("copy");
   const preview =
     sourceNodeIndex === null || !targetGroup
@@ -61,6 +63,8 @@ export function PermissionTransferPanel({
       </div>
       <p className="editor-intro">
         El nodo conserva su valor, contexto y atributos al llegar al destino.
+        También puedes arrastrarlo hacia un grupo del rail para preseleccionar
+        el destino.
       </p>
       <div className="permission-transfer-controls">
         <label>

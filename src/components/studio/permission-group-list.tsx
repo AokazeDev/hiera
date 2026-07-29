@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronRight, CopyPlus, Minus, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronRight,
+  CopyPlus,
+  GripVertical,
+  Minus,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import type { PermissionGroup, PermissionGrouping } from "@/lib/luckperms";
 import type { LuckPermsNode } from "@/lib/permissions";
 
@@ -15,6 +22,8 @@ type PermissionGroupListProps = {
   onSetValue: (nodeIndex: number, value: boolean) => void;
   onRemove: (nodeIndex: number) => void;
   onPrepareTransfer?: (nodeIndex: number) => void;
+  onStartDrag?: (nodeIndex: number) => void;
+  onEndDrag?: () => void;
 };
 
 function contextLabel(node: LuckPermsNode): string | null {
@@ -41,6 +50,8 @@ export function PermissionGroupList({
   onSetValue,
   onRemove,
   onPrepareTransfer,
+  onStartDrag,
+  onEndDrag,
 }: PermissionGroupListProps) {
   return (
     <section
@@ -86,6 +97,24 @@ export function PermissionGroupList({
                       <li key={`${index}-${node.key}`}>
                         <article className="direct-permission">
                           <div>
+                            {onStartDrag && (
+                              <span
+                                className="permission-drag-handle"
+                                draggable
+                                aria-hidden="true"
+                                onDragStart={(event) => {
+                                  event.dataTransfer.effectAllowed = "copyMove";
+                                  event.dataTransfer.setData(
+                                    "text/plain",
+                                    node.key,
+                                  );
+                                  onStartDrag(index);
+                                }}
+                                onDragEnd={onEndDrag}
+                              >
+                                <GripVertical size={14} aria-hidden="true" />
+                              </span>
+                            )}
                             <code>{node.key}</code>
                             {context && <small>Contexto: {context}</small>}
                           </div>

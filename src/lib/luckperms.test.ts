@@ -545,6 +545,12 @@ describe("Group permission transfers", () => {
       transferGroupPermission(withDuplicate, "source", 0, "target", "copy"),
     ).toBe(withDuplicate);
   });
+
+  it("rejects dropping a permission back into its source group", () => {
+    expect(
+      validateGroupPermissionTransfer(transferBackup, "source", 0, "source"),
+    ).toBe("Elige un grupo distinto al de origen.");
+  });
 });
 
 describe("Permission batch application", () => {

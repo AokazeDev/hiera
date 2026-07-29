@@ -158,6 +158,10 @@
 .group-row.is-active {
   background: #d4e58d;
 }
+.group-row.is-drop-target {
+  background: #e9edcf;
+  box-shadow: inset 3px 0 0 var(--olive);
+}
 .group-mark {
   width: 8px;
   height: 8px;

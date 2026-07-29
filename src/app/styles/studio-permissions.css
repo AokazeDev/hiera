@@ -178,6 +178,19 @@
   display: grid;
   gap: 5px;
 }
+.permission-drag-handle {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  color: var(--muted);
+  cursor: grab;
+}
+.permission-drag-handle:active {
+  cursor: grabbing;
+}
+.permission-drag-handle:hover {
+  color: var(--olive);
+}
 .direct-permission code {
   overflow: hidden;
   text-overflow: ellipsis;
