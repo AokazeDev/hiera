@@ -71,12 +71,14 @@ describe("LuckPerms inheritance resolution", () => {
         key: "server.chat",
         value: false,
         origin: "moderator",
+        originNodeIndex: 1,
         inherited: false,
       },
       {
         key: "server.mute",
         value: true,
         origin: "moderator",
+        originNodeIndex: 2,
         inherited: false,
       },
     ]);
@@ -84,6 +86,31 @@ describe("LuckPerms inheritance resolution", () => {
 
   it("terminates a cyclic inheritance chain", () => {
     expect(getEffectiveNodes(backup, "cyclic")).toEqual([]);
+  });
+
+  it("keeps the direct node index from an inherited permission source", () => {
+    const indexedBackup: LuckPermsBackup = {
+      groups: {
+        base: {
+          nodes: [
+            { type: "meta", key: "meta.rank", value: true },
+            { type: "permission", key: "server.kick", value: true },
+          ],
+        },
+        helper: {
+          nodes: [{ type: "inheritance", key: "group.base", value: true }],
+        },
+      },
+    };
+
+    expect(getEffectiveNodes(indexedBackup, "helper")).toMatchObject([
+      {
+        key: "server.kick",
+        origin: "base",
+        originNodeIndex: 1,
+        inherited: true,
+      },
+    ]);
   });
 });
 

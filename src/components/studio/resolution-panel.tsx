@@ -1,6 +1,6 @@
 "use client";
 
-import { Info, ShieldAlert, UserRound } from "lucide-react";
+import { GripVertical, Info, ShieldAlert, UserRound } from "lucide-react";
 import { useState } from "react";
 import { EditHistory } from "@/components/studio/edit-history";
 import { GroupInheritanceEditor } from "@/components/studio/group-inheritance-editor";
@@ -28,6 +28,9 @@ type ResolutionPanelProps = {
   onSelectGroup: (group: string) => void;
   onAddInheritance: (parentName: string) => void;
   onRemoveInheritance: (nodeIndex: number) => void;
+  onPreparePermissionTransfer: (sourceGroup: string, nodeIndex: number) => void;
+  onStartPermissionDrag: (sourceGroup: string, nodeIndex: number) => void;
+  onEndPermissionDrag: () => void;
   catalog?: Map<string, PermissionEntry>;
 };
 
@@ -41,6 +44,9 @@ export function ResolutionPanel({
   onSelectGroup,
   onAddInheritance,
   onRemoveInheritance,
+  onPreparePermissionTransfer,
+  onStartPermissionDrag,
+  onEndPermissionDrag,
   catalog,
 }: ResolutionPanelProps) {
   const [filters, setFilters] = useState(defaultPermissionFilter);
@@ -84,12 +90,44 @@ export function ResolutionPanel({
               </h3>
             )}
             {group.items.slice(0, 10).map((node) => (
-              <div key={`${node.origin}-${node.key}`}>
+              <div key={`${node.origin}-${node.originNodeIndex}-${node.key}`}>
                 <span className={node.value ? "value-true" : "value-false"}>
                   {node.value ? "+" : "-"}
                 </span>
                 <code>{node.key}</code>
                 <small>{node.inherited ? node.origin : "directo"}</small>
+                {groupName && (
+                  <>
+                    <span
+                      className="permission-drag-handle"
+                      draggable
+                      aria-hidden="true"
+                      onDragStart={(event) => {
+                        event.dataTransfer.effectAllowed = "copyMove";
+                        event.dataTransfer.setData("text/plain", node.key);
+                        onStartPermissionDrag(
+                          node.origin,
+                          node.originNodeIndex,
+                        );
+                      }}
+                      onDragEnd={onEndPermissionDrag}
+                    >
+                      <GripVertical size={14} aria-hidden="true" />
+                    </span>
+                    <button
+                      type="button"
+                      className="effective-permission-transfer"
+                      onClick={() =>
+                        onPreparePermissionTransfer(
+                          node.origin,
+                          node.originNodeIndex,
+                        )
+                      }
+                    >
+                      Cambiar
+                    </button>
+                  </>
+                )}
               </div>
             ))}
             {group.items.length > 10 && <p>+ {group.items.length - 10} más</p>}

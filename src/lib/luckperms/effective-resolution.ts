@@ -4,6 +4,7 @@ import { getUserMemberships } from "./user-memberships";
 
 export type ResolvedPermission = LuckPermsNode & {
   origin: string;
+  originNodeIndex: number;
   inherited: boolean;
 };
 
@@ -17,9 +18,18 @@ export function getEffectiveNodes(
   if (visited.has(groupName) || !group) return [];
 
   visited.add(groupName);
-  const direct = group.nodes
-    .filter((node) => node.type === "permission")
-    .map((node) => ({ ...node, origin: groupName, inherited: false }));
+  const direct = group.nodes.flatMap((node, nodeIndex) =>
+    node.type === "permission"
+      ? [
+          {
+            ...node,
+            origin: groupName,
+            originNodeIndex: nodeIndex,
+            inherited: false,
+          },
+        ]
+      : [],
+  );
   const inherited = getParents(group).flatMap((parent) =>
     getEffectiveNodes(backup, parent, visited).map((node) => ({
       ...node,
@@ -42,9 +52,11 @@ export function getEffectiveUserNodes(
   if (!user) return [];
 
   const origin = user.username ?? userId;
-  const direct = user.nodes
-    .filter((node) => node.type === "permission")
-    .map((node) => ({ ...node, origin, inherited: false }));
+  const direct = user.nodes.flatMap((node, nodeIndex) =>
+    node.type === "permission"
+      ? [{ ...node, origin, originNodeIndex: nodeIndex, inherited: false }]
+      : [],
+  );
   const inherited = getUserMemberships(user).flatMap((groupName) =>
     getEffectiveNodes(backup, groupName).map((node) => ({
       ...node,

@@ -209,24 +209,40 @@ export function Studio() {
     setPendingTransfer(null);
   }
 
-  function preparePermissionTransfer(nodeIndex: number) {
-    if (!selectedGroup) return;
+  function preparePermissionTransfer(
+    nodeIndex: number,
+    sourceGroup = selectedGroup,
+  ) {
+    if (!sourceGroup) return;
     setPendingTransfer({
-      sourceGroup: selectedGroup,
+      sourceGroup,
       nodeIndex,
       targetGroup: null,
     });
   }
 
-  function startPermissionDrag(nodeIndex: number) {
-    if (!selectedGroup) return;
+  function prepareGroupPermissionTransfer(
+    sourceGroup: string,
+    nodeIndex: number,
+  ) {
+    setSelectedGroup(sourceGroup);
+    setSelectedUser(null);
+    setWorkspace("editor");
+    preparePermissionTransfer(nodeIndex, sourceGroup);
+  }
+
+  function startPermissionDrag(nodeIndex: number, sourceGroup = selectedGroup) {
+    if (!sourceGroup) return;
     setDraggedCatalogPermission(null);
-    setDraggedPermission({ sourceGroup: selectedGroup, nodeIndex });
+    setDraggedPermission({ sourceGroup, nodeIndex });
   }
 
   function dropPermissionOnGroup(targetGroup: string) {
     if (!draggedPermission) return;
     setPendingTransfer({ ...draggedPermission, targetGroup });
+    setSelectedGroup(draggedPermission.sourceGroup);
+    setSelectedUser(null);
+    setWorkspace("editor");
     setDraggedPermission(null);
   }
 
@@ -241,6 +257,7 @@ export function Studio() {
       permissionKey: draggedCatalogPermission,
       targetGroup,
     });
+    setWorkspace("catalog");
     setDraggedCatalogPermission(null);
   }
 
@@ -482,6 +499,11 @@ export function Studio() {
           draggingCatalogPermission={Boolean(draggedCatalogPermission)}
           onDropPermission={dropPermissionOnGroup}
           onDropCatalogPermission={dropCatalogPermissionOnGroup}
+          onPrepareGroupTransfer={prepareGroupPermissionTransfer}
+          onStartGroupDrag={(sourceGroup, nodeIndex) =>
+            startPermissionDrag(nodeIndex, sourceGroup)
+          }
+          onEndGroupDrag={() => setDraggedPermission(null)}
         />
         {workspace === "comparison" ? (
           <GroupComparison backup={backup} initialGroup={selectedGroup} />
@@ -552,6 +574,11 @@ export function Studio() {
           onSelectGroup={setSelectedGroup}
           onAddInheritance={addInheritance}
           onRemoveInheritance={removeInheritance}
+          onPreparePermissionTransfer={prepareGroupPermissionTransfer}
+          onStartPermissionDrag={(sourceGroup, nodeIndex) =>
+            startPermissionDrag(nodeIndex, sourceGroup)
+          }
+          onEndPermissionDrag={() => setDraggedPermission(null)}
           catalog={catalog}
         />
       </section>

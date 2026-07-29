@@ -4,6 +4,7 @@ import { FileUp, Search, UserRound, Users, X } from "lucide-react";
 import { useState } from "react";
 import { BackupDiagnostics } from "@/components/studio/backup-diagnostics";
 import { GroupManager } from "@/components/studio/group-manager";
+import { PermissionSearchResults } from "@/components/studio/permission-search-results";
 import { searchPermissions } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
@@ -21,6 +22,9 @@ type BackupRailProps = {
   draggingCatalogPermission: boolean;
   onDropPermission: (groupName: string) => void;
   onDropCatalogPermission: (groupName: string) => void;
+  onPrepareGroupTransfer: (groupName: string, nodeIndex: number) => void;
+  onStartGroupDrag: (groupName: string, nodeIndex: number) => void;
+  onEndGroupDrag: () => void;
 };
 
 export function BackupRail({
@@ -37,6 +41,9 @@ export function BackupRail({
   draggingCatalogPermission,
   onDropPermission,
   onDropCatalogPermission,
+  onPrepareGroupTransfer,
+  onStartGroupDrag,
+  onEndGroupDrag,
 }: BackupRailProps) {
   const [permissionSearch, setPermissionSearch] = useState("");
   const [dropTarget, setDropTarget] = useState<string | null>(null);
@@ -113,6 +120,16 @@ export function BackupRail({
                   ? `${matchCount} coincidencias en ${matchingGroupIds.size} grupos y ${matchingUserIds.size} usuarios.`
                   : "No hay permisos directos que coincidan."}
               </output>
+            )}
+            {permissionSearch.trim() && searchResults.length > 0 && (
+              <PermissionSearchResults
+                results={searchResults}
+                onSelectGroup={onSelectGroup}
+                onSelectUser={onSelectUser}
+                onPrepareGroupTransfer={onPrepareGroupTransfer}
+                onStartGroupDrag={onStartGroupDrag}
+                onEndGroupDrag={onEndGroupDrag}
+              />
             )}
           </div>
           <div className="group-list">
