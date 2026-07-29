@@ -625,6 +625,45 @@ export function PermissionCanvas({
   const groupNames = Object.keys(backup.groups).sort((left, right) =>
     left.localeCompare(right),
   );
+  const parentNamesByGroup = Object.fromEntries(
+    groupNames.map((name) => [
+      name,
+      backup.groups[name].nodes
+        .filter((node) => node.type === "inheritance" && node.value)
+        .map((node) => node.key.replace(/^group\./, ""))
+        .filter((parentName) => groupNames.includes(parentName)),
+    ]),
+  );
+  const groupDepths: Record<string, number> = {};
+  function getGroupDepth(name: string, visiting = new Set<string>()): number {
+    if (groupDepths[name] !== undefined) return groupDepths[name];
+    if (visiting.has(name)) return 0;
+    const nextVisiting = new Set(visiting).add(name);
+    const depth = Math.max(
+      0,
+      ...(parentNamesByGroup[name] ?? []).map(
+        (parentName) => getGroupDepth(parentName, nextVisiting) + 1,
+      ),
+    );
+    groupDepths[name] = depth;
+    return depth;
+  }
+  for (const name of groupNames) {
+    getGroupDepth(name);
+  }
+  const groupColumns: Record<string, number> = {};
+  const groupsByDepth = new Map<number, string[]>();
+  for (const name of groupNames) {
+    const depth = groupDepths[name] ?? 0;
+    const row = groupsByDepth.get(depth) ?? [];
+    groupColumns[name] = row.length;
+    row.push(name);
+    groupsByDepth.set(depth, row);
+  }
+  const groupLaneWidth = 348;
+  const groupLaneHeight = 320;
+  const maxGroupDepth = Math.max(0, ...Object.values(groupDepths));
+  const userOffsets: Record<string, number> = {};
   const groupNodes: GroupFlowNode[] = groupNames.map((groupName, index) => {
     const group = backup.groups[groupName];
     const permissions = group.nodes
@@ -644,8 +683,8 @@ export function PermissionCanvas({
       id: `group:${groupName}`,
       type: "group",
       position: positions[`group:${groupName}`] ?? {
-        x: (index % 3) * 330,
-        y: Math.floor(index / 3) * 285,
+        x: (groupColumns[groupName] ?? index) * groupLaneWidth,
+        y: (groupDepths[groupName] ?? 0) * groupLaneHeight,
       },
       data: {
         groupName,
@@ -677,13 +716,18 @@ export function PermissionCanvas({
   const userEntries = Object.entries(backup.users ?? {}).sort(
     ([left], [right]) => left.localeCompare(right),
   );
-  const userNodes: UserFlowNode[] = userEntries.map(
-    ([userId, user], index) => ({
+  const userNodes: UserFlowNode[] = userEntries.map(([userId, user], index) => {
+    const primaryGroup = user.primaryGroup ?? null;
+    const groupColumn = primaryGroup ? groupColumns[primaryGroup] : undefined;
+    const offset = primaryGroup ? (userOffsets[primaryGroup] ?? 0) : index;
+    if (primaryGroup) userOffsets[primaryGroup] = offset + 1;
+    return {
       id: `user:${userId}`,
       type: "user",
       position: positions[`user:${userId}`] ?? {
-        x: (index % 3) * 330,
-        y: Math.ceil(groupNames.length / 3) * 285 + Math.floor(index / 3) * 205,
+        x:
+          (groupColumn ?? index % 4) * groupLaneWidth + (primaryGroup ? 0 : 24),
+        y: (maxGroupDepth + 1) * groupLaneHeight + Math.floor(offset / 3) * 220,
       },
       data: {
         userId,
@@ -716,8 +760,8 @@ export function PermissionCanvas({
           openDialog({ type: "edit-context", subject: "user", id, nodeIndex });
         },
       },
-    }),
-  );
+    };
+  });
   const nodes = [...groupNodes, ...userNodes];
   const edges: Edge[] = groupNames.flatMap((groupName) =>
     backup.groups[groupName].nodes.flatMap((node) => {
@@ -837,7 +881,11 @@ export function PermissionCanvas({
           }}
         >
           <Background gap={22} size={1} color="var(--line-strong)" />
-          <Controls position="bottom-right" showInteractive={false} />
+          <Controls
+            className="permission-canvas-controls"
+            position="bottom-right"
+            showInteractive={false}
+          />
           <Panel className="canvas-legend" position="top-right">
             <div className="canvas-legend-heading">
               <span>MAPA ACTIVO</span>

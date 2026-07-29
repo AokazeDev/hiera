@@ -930,6 +930,160 @@ textarea {
   }
 }
 
+/* Graph cards use opaque layers so hierarchy and drag state stay legible. */
+.permission-canvas {
+  overflow: hidden;
+  border-color: var(--line-strong);
+  background:
+    linear-gradient(rgb(57 62 65 / 28%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(57 62 65 / 28%) 1px, transparent 1px),
+    var(--bg-card);
+  background-size: 32px 32px;
+}
+
+.permission-canvas .react-flow__node {
+  will-change: transform;
+}
+
+.permission-canvas .react-flow__node.dragging {
+  z-index: 10;
+}
+
+.permission-canvas .react-flow__node.dragging .permission-canvas-group,
+.permission-canvas .react-flow__node.dragging .permission-canvas-user {
+  cursor: grabbing;
+  border-color: var(--accent);
+  box-shadow:
+    0 18px 38px rgb(0 0 0 / 42%),
+    0 0 0 3px var(--accent-soft);
+  transform: translateY(-2px);
+}
+
+.permission-canvas-group,
+.permission-canvas-user {
+  width: 300px;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: var(--bg-raised);
+  box-shadow: 0 10px 24px rgb(0 0 0 / 24%);
+  color: var(--text);
+  padding: 14px;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.permission-canvas-group:hover,
+.permission-canvas-user:hover {
+  border-color: #697276;
+  box-shadow: 0 14px 28px rgb(0 0 0 / 30%);
+}
+
+.permission-canvas-group.is-selected {
+  border-color: var(--accent);
+  background: #151d10;
+  box-shadow:
+    inset 0 2px 0 var(--accent),
+    0 12px 28px rgb(0 0 0 / 32%);
+}
+
+.permission-canvas-user {
+  border-color: rgb(92 225 230 / 48%);
+  background: #0d1719;
+}
+
+.permission-canvas-user.is-selected {
+  border-color: #5ce1e6;
+  background: #102326;
+  box-shadow:
+    inset 0 2px 0 #5ce1e6,
+    0 12px 28px rgb(0 0 0 / 32%);
+}
+
+.permission-canvas-group-title {
+  color: var(--text);
+}
+
+.permission-canvas-group-title strong {
+  letter-spacing: -0.02em;
+}
+
+.permission-canvas-summary {
+  color: var(--text-soft);
+}
+
+.permission-canvas-search,
+.permission-canvas-add {
+  border-color: var(--line-strong);
+  background: var(--bg-card);
+}
+
+.permission-canvas-search input,
+.permission-canvas-add input {
+  color: var(--text);
+}
+
+.permission-canvas-permissions > div {
+  border-color: var(--line);
+}
+
+.permission-canvas-permissions code {
+  color: var(--accent);
+}
+
+.permission-canvas-permissions code.is-denied {
+  color: var(--danger);
+}
+
+.permission-canvas .react-flow__handle {
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--bg-card);
+  background: var(--accent);
+}
+
+.permission-canvas-user .react-flow__handle {
+  background: #5ce1e6;
+}
+
+.permission-canvas .react-flow__edge-path {
+  stroke: var(--accent);
+  stroke-width: 1.6;
+}
+
+.permission-canvas .react-flow__edge.selected .react-flow__edge-path,
+.permission-canvas .react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 2.6;
+  filter: drop-shadow(0 0 4px rgb(202 255 61 / 34%));
+}
+
+.permission-canvas .react-flow__controls {
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  background: var(--bg-raised);
+  box-shadow: 0 12px 24px rgb(0 0 0 / 34%);
+}
+
+.permission-canvas .react-flow__controls-button {
+  width: 34px;
+  height: 34px;
+  border-color: var(--line);
+  background: var(--bg-raised);
+  color: var(--text);
+}
+
+.permission-canvas .react-flow__controls-button:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.permission-canvas .react-flow__controls-button svg {
+  fill: currentcolor;
+  stroke: currentcolor;
+}
+
 /* Reference-matched public action and catalog card anatomy. */
 .action-button {
   display: inline-flex;
