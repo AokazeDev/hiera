@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addGroupInheritance,
   addUserMembership,
+  applyCatalogPermissionDecision,
   applyPermissionBatch,
   compareGroups,
   createGroup,
@@ -16,6 +17,7 @@ import {
   getUserMemberships,
   inspectNodes,
   isValidPermissionKey,
+  previewCatalogPermissionDecision,
   previewPermissionBatch,
   recordBackupChange,
   redoBackupChange,
@@ -675,6 +677,88 @@ describe("Group permission transfers", () => {
         "remove",
       ),
     ).toBe("El grupo de destino no tiene este permiso en el mismo contexto.");
+  });
+});
+
+describe("Catalog permission decisions", () => {
+  const catalogBackup: LuckPermsBackup = {
+    groups: {
+      member: {
+        nodes: [
+          {
+            type: "permission",
+            key: "authme.player.login",
+            value: false,
+            expiry: 123,
+          },
+          {
+            type: "permission",
+            key: "authme.player.login",
+            value: true,
+            context: { world: "nether" },
+          },
+        ],
+      },
+    },
+  };
+
+  it("previews the global catalog change without treating contextual nodes as the target", () => {
+    expect(
+      previewCatalogPermissionDecision(
+        catalogBackup,
+        "authme.player.login",
+        "member",
+        "grant",
+      ),
+    ).toEqual({
+      key: "authme.player.login",
+      groupName: "member",
+      value: true,
+      existingGlobalValue: false,
+    });
+  });
+
+  it("updates only the matching global permission and preserves its attributes", () => {
+    const changed = applyCatalogPermissionDecision(
+      catalogBackup,
+      "authme.player.login",
+      "member",
+      "grant",
+    );
+
+    expect(changed.groups.member.nodes).toEqual([
+      {
+        type: "permission",
+        key: "authme.player.login",
+        value: true,
+        expiry: 123,
+      },
+      {
+        type: "permission",
+        key: "authme.player.login",
+        value: true,
+        context: { world: "nether" },
+      },
+    ]);
+  });
+
+  it("returns the original backup when the catalog permission or target is invalid", () => {
+    expect(
+      applyCatalogPermissionDecision(
+        catalogBackup,
+        "invalid key",
+        "member",
+        "deny",
+      ),
+    ).toBe(catalogBackup);
+    expect(
+      applyCatalogPermissionDecision(
+        catalogBackup,
+        "authme.player.login",
+        "missing",
+        "deny",
+      ),
+    ).toBe(catalogBackup);
   });
 });
 

@@ -18,7 +18,9 @@ type BackupRailProps = {
   onRenameGroup: (groupName: string) => void;
   onDeleteGroup: () => void;
   draggingPermissionFrom: string | null;
+  draggingCatalogPermission: boolean;
   onDropPermission: (groupName: string) => void;
+  onDropCatalogPermission: (groupName: string) => void;
 };
 
 export function BackupRail({
@@ -32,7 +34,9 @@ export function BackupRail({
   onRenameGroup,
   onDeleteGroup,
   draggingPermissionFrom,
+  draggingCatalogPermission,
   onDropPermission,
+  onDropCatalogPermission,
 }: BackupRailProps) {
   const [permissionSearch, setPermissionSearch] = useState("");
   const [dropTarget, setDropTarget] = useState<string | null>(null);
@@ -120,8 +124,8 @@ export function BackupRail({
                 onClick={() => onSelectGroup(name)}
                 onDragOver={(event) => {
                   if (
-                    !draggingPermissionFrom ||
-                    draggingPermissionFrom === name
+                    !draggingCatalogPermission &&
+                    (!draggingPermissionFrom || draggingPermissionFrom === name)
                   )
                     return;
                   event.preventDefault();
@@ -132,7 +136,9 @@ export function BackupRail({
                 onDrop={(event) => {
                   event.preventDefault();
                   setDropTarget(null);
-                  if (
+                  if (draggingCatalogPermission) {
+                    onDropCatalogPermission(name);
+                  } else if (
                     draggingPermissionFrom &&
                     draggingPermissionFrom !== name
                   ) {

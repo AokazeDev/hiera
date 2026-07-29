@@ -1,7 +1,9 @@
 "use client";
 
-import { Search, Sparkles } from "lucide-react";
+import { GripVertical, Search, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
+import { CatalogPermissionDropPanel } from "@/components/studio/catalog-permission-drop-panel";
+import type { CatalogPermissionDecision } from "@/lib/luckperms";
 import { previewPermissionBatch } from "@/lib/luckperms";
 import type {
   LuckPermsBackup,
@@ -27,6 +29,15 @@ type CatalogPanelProps = {
   catalog: PermissionCatalog;
   groupName: string | null;
   onApply: (nodes: string[], groupNames: string[]) => void;
+  dragRequest: { permissionKey: string; targetGroup: string } | null;
+  onStartPermissionDrag: (permissionKey: string) => void;
+  onEndPermissionDrag: () => void;
+  onApplyDroppedPermission: (
+    permissionKey: string,
+    groupName: string,
+    decision: CatalogPermissionDecision,
+  ) => void;
+  onCloseDragRequest: () => void;
 };
 
 export function CatalogPanel({
@@ -34,6 +45,11 @@ export function CatalogPanel({
   catalog,
   groupName,
   onApply,
+  dragRequest,
+  onStartPermissionDrag,
+  onEndPermissionDrag,
+  onApplyDroppedPermission,
+  onCloseDragRequest,
 }: CatalogPanelProps) {
   const [query, setQuery] = useState("");
   const [audience, setAudience] = useState<PermissionAudience | "all">("all");
@@ -121,6 +137,19 @@ export function CatalogPanel({
               checked={selectedNodes.has(permission.node)}
               onChange={() => toggle(permission.node)}
             />
+            <span
+              className="catalog-drag-handle"
+              draggable
+              aria-hidden="true"
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = "copy";
+                event.dataTransfer.setData("text/plain", permission.node);
+                onStartPermissionDrag(permission.node);
+              }}
+              onDragEnd={onEndPermissionDrag}
+            >
+              <GripVertical size={14} aria-hidden="true" />
+            </span>
             <span className="permission-node">{permission.node}</span>
             <span className="permission-description">
               {permission.description}
@@ -135,6 +164,16 @@ export function CatalogPanel({
           </label>
         ))}
       </div>
+      {backup && dragRequest && (
+        <CatalogPermissionDropPanel
+          key={`${dragRequest.permissionKey}-${dragRequest.targetGroup}`}
+          backup={backup}
+          permissionKey={dragRequest.permissionKey}
+          initialTargetGroup={dragRequest.targetGroup}
+          onApply={onApplyDroppedPermission}
+          onClose={onCloseDragRequest}
+        />
+      )}
       {backup && (
         <fieldset className="batch-targets">
           <legend>Grupos de destino</legend>

@@ -18,10 +18,14 @@ import { GroupPermissionEditor } from "@/components/studio/group-permission-edit
 import { InheritanceGraph } from "@/components/studio/inheritance-graph";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
 import { UserMembershipEditor } from "@/components/studio/user-membership-editor";
-import type { PermissionTransferMode } from "@/lib/luckperms";
+import type {
+  CatalogPermissionDecision,
+  PermissionTransferMode,
+} from "@/lib/luckperms";
 import {
   addGroupInheritance,
   addUserMembership,
+  applyCatalogPermissionDecision,
   applyPermissionBatch,
   createGroup,
   deleteGroup,
@@ -51,6 +55,7 @@ type PendingPermissionTransfer = {
 };
 
 type DraggedPermission = Omit<PendingPermissionTransfer, "targetGroup">;
+type PendingCatalogPermission = { permissionKey: string; targetGroup: string };
 
 export function Studio() {
   const root = useRef<HTMLElement>(null);
@@ -66,6 +71,11 @@ export function Studio() {
     useState<PendingPermissionTransfer | null>(null);
   const [draggedPermission, setDraggedPermission] =
     useState<DraggedPermission | null>(null);
+  const [draggedCatalogPermission, setDraggedCatalogPermission] = useState<
+    string | null
+  >(null);
+  const [pendingCatalogPermission, setPendingCatalogPermission] =
+    useState<PendingCatalogPermission | null>(null);
   const [workspace, setWorkspace] = useState<
     "editor" | "catalog" | "comparison" | "inheritance"
   >("editor");
@@ -111,6 +121,8 @@ export function Studio() {
         setHistory(emptyBackupHistory);
         setPendingTransfer(null);
         setDraggedPermission(null);
+        setDraggedCatalogPermission(null);
+        setPendingCatalogPermission(null);
       } catch (error) {
         window.alert(
           `No se pudo leer el backup: ${error instanceof Error ? error.message : "JSON invalido"}`,
@@ -199,6 +211,7 @@ export function Studio() {
 
   function startPermissionDrag(nodeIndex: number) {
     if (!selectedGroup) return;
+    setDraggedCatalogPermission(null);
     setDraggedPermission({ sourceGroup: selectedGroup, nodeIndex });
   }
 
@@ -206,6 +219,38 @@ export function Studio() {
     if (!draggedPermission) return;
     setPendingTransfer({ ...draggedPermission, targetGroup });
     setDraggedPermission(null);
+  }
+
+  function startCatalogPermissionDrag(permissionKey: string) {
+    setDraggedPermission(null);
+    setDraggedCatalogPermission(permissionKey);
+  }
+
+  function dropCatalogPermissionOnGroup(targetGroup: string) {
+    if (!draggedCatalogPermission) return;
+    setPendingCatalogPermission({
+      permissionKey: draggedCatalogPermission,
+      targetGroup,
+    });
+    setDraggedCatalogPermission(null);
+  }
+
+  function applyDroppedCatalogPermission(
+    permissionKey: string,
+    targetGroup: string,
+    decision: CatalogPermissionDecision,
+  ) {
+    if (!backup) return;
+    updateBackup(
+      applyCatalogPermissionDecision(
+        backup,
+        permissionKey,
+        targetGroup,
+        decision,
+      ),
+      `${decision === "grant" ? "Conceder" : "Denegar"} ${permissionKey} de AuthMe Reloaded en ${targetGroup}`,
+    );
+    setPendingCatalogPermission(null);
   }
 
   function addInheritance(parentName: string) {
@@ -425,7 +470,9 @@ export function Studio() {
           onRenameGroup={renameSelectedGroup}
           onDeleteGroup={deleteSelectedGroup}
           draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
+          draggingCatalogPermission={Boolean(draggedCatalogPermission)}
           onDropPermission={dropPermissionOnGroup}
+          onDropCatalogPermission={dropCatalogPermissionOnGroup}
         />
         {workspace === "comparison" ? (
           <GroupComparison backup={backup} initialGroup={selectedGroup} />
@@ -475,6 +522,11 @@ export function Studio() {
             catalog={authMeReloaded}
             groupName={selectedGroup}
             onApply={applyPermissions}
+            dragRequest={pendingCatalogPermission}
+            onStartPermissionDrag={startCatalogPermissionDrag}
+            onEndPermissionDrag={() => setDraggedCatalogPermission(null)}
+            onApplyDroppedPermission={applyDroppedCatalogPermission}
+            onCloseDragRequest={() => setPendingCatalogPermission(null)}
           />
         )}
         <ResolutionPanel

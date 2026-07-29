@@ -1,5 +1,6 @@
 export * from "./luckperms/backup-diagnostics";
 export * from "./luckperms/backup-diff";
+export * from "./luckperms/catalog-permission-decisions";
 export * from "./luckperms/direct-permissions";
 export * from "./luckperms/edit-history";
 export * from "./luckperms/effective-resolution";

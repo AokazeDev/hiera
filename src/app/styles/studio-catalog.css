@@ -67,6 +67,18 @@
   margin: 2px 0 0;
   accent-color: #718a11;
 }
+.catalog-drag-handle {
+  display: inline-grid;
+  place-items: center;
+  color: var(--muted);
+  cursor: grab;
+}
+.catalog-drag-handle:active {
+  cursor: grabbing;
+}
+.catalog-drag-handle:hover {
+  color: var(--olive);
+}
 .permission-node {
   font-family: var(--font-geist-mono), monospace;
   font-size: 11px;
