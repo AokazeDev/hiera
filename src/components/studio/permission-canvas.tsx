@@ -516,6 +516,9 @@ export function PermissionCanvas({
   const [positions, setPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
+  const [dragPositions, setDragPositions] = useState<
+    Record<string, { x: number; y: number }>
+  >({});
 
   useEffect(() => {
     const stored = window.localStorage.getItem("hiera-graph-positions");
@@ -682,10 +685,11 @@ export function PermissionCanvas({
     return {
       id: `group:${groupName}`,
       type: "group",
-      position: positions[`group:${groupName}`] ?? {
-        x: (groupColumns[groupName] ?? index) * groupLaneWidth,
-        y: (groupDepths[groupName] ?? 0) * groupLaneHeight,
-      },
+      position: dragPositions[`group:${groupName}`] ??
+        positions[`group:${groupName}`] ?? {
+          x: (groupColumns[groupName] ?? index) * groupLaneWidth,
+          y: (groupDepths[groupName] ?? 0) * groupLaneHeight,
+        },
       data: {
         groupName,
         permissionCount: permissions.length,
@@ -724,11 +728,15 @@ export function PermissionCanvas({
     return {
       id: `user:${userId}`,
       type: "user",
-      position: positions[`user:${userId}`] ?? {
-        x:
-          (groupColumn ?? index % 4) * groupLaneWidth + (primaryGroup ? 0 : 24),
-        y: (maxGroupDepth + 1) * groupLaneHeight + Math.floor(offset / 3) * 220,
-      },
+      position: dragPositions[`user:${userId}`] ??
+        positions[`user:${userId}`] ?? {
+          x:
+            (groupColumn ?? index % 4) * groupLaneWidth +
+            (primaryGroup ? 0 : 24),
+          y:
+            (maxGroupDepth + 1) * groupLaneHeight +
+            Math.floor(offset / 3) * 220,
+        },
       data: {
         userId,
         displayName: user.username ?? userId,
@@ -855,8 +863,19 @@ export function PermissionCanvas({
               });
             }
           }}
-          onNodeDragStop={(_, node) =>
+          onNodeDragStop={(_, node) => {
             setPositions((current) => ({
+              ...current,
+              [node.id]: node.position,
+            }));
+            setDragPositions((current) => {
+              const next = { ...current };
+              delete next[node.id];
+              return next;
+            });
+          }}
+          onNodeDrag={(_, node) =>
+            setDragPositions((current) => ({
               ...current,
               [node.id]: node.position,
             }))
@@ -889,7 +908,13 @@ export function PermissionCanvas({
           <Panel className="canvas-legend" position="top-right">
             <div className="canvas-legend-heading">
               <span>MAPA ACTIVO</span>
-              <button type="button" onClick={() => setPositions({})}>
+              <button
+                type="button"
+                onClick={() => {
+                  setPositions({});
+                  setDragPositions({});
+                }}
+              >
                 Restablecer
               </button>
             </div>
