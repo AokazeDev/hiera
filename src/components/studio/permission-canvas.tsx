@@ -519,6 +519,7 @@ export function PermissionCanvas({
   const [dragPositions, setDragPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
+  const [fitViewOnInit, setFitViewOnInit] = useState(true);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("hiera-graph-positions");
@@ -841,10 +842,11 @@ export function PermissionCanvas({
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
-          fitView
+          fitView={fitViewOnInit}
           fitViewOptions={{ padding: 0.2 }}
           minZoom={0.25}
           maxZoom={1.5}
+          onInit={() => setFitViewOnInit(false)}
           onConnect={(connection) => {
             if (!connection.source || !connection.target) return;
             if (!connection.target.startsWith("group:")) return;
