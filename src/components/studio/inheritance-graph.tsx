@@ -12,7 +12,7 @@ import {
 } from "@xyflow/react";
 import gsap from "gsap";
 import { Info, MapPin, TriangleAlert, UserRound } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   buildInheritanceGraph,
   buildPermissionProvenanceGraph,
@@ -150,6 +150,9 @@ export function InheritanceGraph({
             )
           : buildInheritanceGraph(backup, groupName)
         : null;
+  const graphSignature = graph
+    ? `${graph.nodes.map((node) => `${node.id}:${node.label}`).join("|")}#${graph.edges.map((edge) => edge.id).join("|")}`
+    : null;
 
   useEffect(
     () => () => {
@@ -178,6 +181,44 @@ export function InheritanceGraph({
     }, root);
     return () => context.revert();
   }, [traversedEdge]);
+
+  useLayoutEffect(() => {
+    if (!graphSignature || !root.current) return;
+    if (!window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      return;
+    }
+
+    const context = gsap.context(() => {
+      const timeline = gsap.timeline();
+      timeline
+        .fromTo(
+          ".inheritance-graph-node, .resolution-graph-node",
+          { autoAlpha: 0, y: 8 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.24,
+            stagger: 0.035,
+            ease: "power2.out",
+            clearProps: "opacity,transform,visibility",
+          },
+        )
+        .fromTo(
+          ".react-flow__edge-path",
+          { opacity: 0 },
+          {
+            opacity: 1,
+            duration: 0.18,
+            stagger: 0.02,
+            ease: "power1.out",
+            clearProps: "opacity",
+          },
+          "<0.08",
+        );
+    }, root);
+
+    return () => context.revert();
+  }, [graphSignature]);
 
   function traverseToGroup(targetGroup: string) {
     const edge = graph?.edges.find(
