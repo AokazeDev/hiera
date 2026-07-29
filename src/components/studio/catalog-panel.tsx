@@ -3,7 +3,10 @@
 import { GripVertical, Search, Sparkles } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CatalogPermissionDropPanel } from "@/components/studio/catalog-permission-drop-panel";
-import type { CatalogPermissionDecision } from "@/lib/luckperms";
+import type {
+  CatalogPermissionDecision,
+  PermissionBatchDecision,
+} from "@/lib/luckperms";
 import { previewPermissionBatch } from "@/lib/luckperms";
 import type {
   LuckPermsBackup,
@@ -28,7 +31,11 @@ type CatalogPanelProps = {
   backup: LuckPermsBackup | null;
   catalog: PermissionCatalog;
   groupName: string | null;
-  onApply: (nodes: string[], groupNames: string[]) => void;
+  onApply: (
+    nodes: string[],
+    groupNames: string[],
+    decision: PermissionBatchDecision,
+  ) => void;
   dragRequest: { permissionKey: string; targetGroup: string } | null;
   onStartPermissionDrag: (permissionKey: string) => void;
   onEndPermissionDrag: () => void;
@@ -55,6 +62,8 @@ export function CatalogPanel({
   const [audience, setAudience] = useState<PermissionAudience | "all">("all");
   const [selectedNodes, setSelectedNodes] = useState<Set<string>>(new Set());
   const [targetGroups, setTargetGroups] = useState<Set<string>>(new Set());
+  const [batchDecision, setBatchDecision] =
+    useState<PermissionBatchDecision>("grant");
   useEffect(() => {
     setTargetGroups(groupName ? new Set([groupName]) : new Set());
   }, [groupName]);
@@ -82,10 +91,15 @@ export function CatalogPanel({
     });
   }
   const preview = backup
-    ? previewPermissionBatch(backup, [...targetGroups], [...selectedNodes])
+    ? previewPermissionBatch(
+        backup,
+        [...targetGroups],
+        [...selectedNodes],
+        batchDecision,
+      )
     : null;
   function apply() {
-    onApply([...selectedNodes], [...targetGroups]);
+    onApply([...selectedNodes], [...targetGroups], batchDecision);
     setSelectedNodes(new Set());
   }
   return (
@@ -177,7 +191,26 @@ export function CatalogPanel({
       {backup && (
         <fieldset className="batch-targets">
           <legend>Grupos de destino</legend>
-          <p>Elige dónde se concederá esta selección.</p>
+          <p>Elige el cambio y los grupos de destino.</p>
+          <div className="batch-decisions">
+            {(
+              [
+                ["grant", "Conceder"],
+                ["deny", "Denegar"],
+                ["remove", "Eliminar globales"],
+              ] as Array<[PermissionBatchDecision, string]>
+            ).map(([decision, label]) => (
+              <label key={decision}>
+                <input
+                  type="radio"
+                  name="batch-decision"
+                  checked={batchDecision === decision}
+                  onChange={() => setBatchDecision(decision)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
           <div>
             {Object.keys(backup.groups).map((group) => (
               <label key={group}>
@@ -195,11 +228,14 @@ export function CatalogPanel({
               {preview.targets.map((target) => (
                 <li key={target.groupName}>
                   <strong>{target.groupName}</strong>
-                  {target.additions.length > 0
-                    ? `: conceder ${target.additions.join(", ")}.`
-                    : ": sin permisos nuevos."}
-                  {target.alreadyPresent.length > 0 &&
-                    ` Ya contiene ${target.alreadyPresent.join(", ")}.`}
+                  {target.additions.length > 0 &&
+                    `: añadir ${target.additions.join(", ")}.`}
+                  {target.updates.length > 0 &&
+                    ` Actualizar ${target.updates.join(", ")}.`}
+                  {target.removals.length > 0 &&
+                    ` Eliminar ${target.removals.join(", ")}.`}
+                  {target.unchanged.length > 0 &&
+                    ` Sin cambios: ${target.unchanged.join(", ")}.`}
                 </li>
               ))}
             </ul>
@@ -209,16 +245,21 @@ export function CatalogPanel({
       <div className="selection-dock">
         <span aria-live="polite">
           {preview
-            ? `${selectedNodes.size} seleccionados, ${preview.additionCount} concesiones nuevas en ${preview.targets.length} grupos.`
+            ? `${selectedNodes.size} seleccionados, ${preview.changeCount} cambios en ${preview.targets.length} grupos.`
             : `${selectedNodes.size} seleccionados. Importa un backup para elegir destinos.`}
         </span>
         <button
           type="button"
           className="primary-action"
-          disabled={!preview || preview.additionCount === 0}
+          disabled={!preview || preview.changeCount === 0}
           onClick={apply}
         >
-          Añadir concedidos <Sparkles size={15} />
+          {batchDecision === "grant"
+            ? "Aplicar concesiones"
+            : batchDecision === "deny"
+              ? "Aplicar denegaciones"
+              : "Eliminar permisos globales"}{" "}
+          <Sparkles size={15} />
         </button>
       </div>
     </section>

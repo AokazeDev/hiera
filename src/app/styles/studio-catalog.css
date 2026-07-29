@@ -151,6 +151,9 @@
   flex-wrap: wrap;
   gap: 6px 14px;
 }
+.batch-targets .batch-decisions {
+  margin: 10px 0;
+}
 .batch-targets label {
   display: inline-flex;
   align-items: center;

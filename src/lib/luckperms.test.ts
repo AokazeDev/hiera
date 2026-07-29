@@ -793,12 +793,12 @@ describe("Permission batch application", () => {
         ],
       ),
     ).toMatchObject({
-      additionCount: 4,
+      changeCount: 4,
       targets: [
         {
           groupName: "default",
           additions: ["authme.player.register"],
-          alreadyPresent: ["authme.player.login", "authme.player.logout"],
+          unchanged: ["authme.player.login", "authme.player.logout"],
         },
         {
           groupName: "member",
@@ -834,6 +834,77 @@ describe("Permission batch application", () => {
       { type: "permission", key: "authme.player.login", value: true },
       { type: "permission", key: "authme.player.register", value: true },
       { type: "permission", key: "authme.player.logout", value: true },
+    ]);
+  });
+
+  it("previews and applies denials without touching contextual permissions", () => {
+    const preview = previewPermissionBatch(
+      batchBackup,
+      ["default", "member"],
+      ["authme.player.login", "authme.player.register"],
+      "deny",
+    );
+
+    expect(preview.changeCount).toBe(4);
+    expect(preview.targets).toMatchObject([
+      {
+        groupName: "default",
+        additions: ["authme.player.register"],
+        updates: ["authme.player.login"],
+      },
+      {
+        groupName: "member",
+        additions: ["authme.player.login", "authme.player.register"],
+      },
+    ]);
+    expect(
+      applyPermissionBatch(
+        batchBackup,
+        ["default", "member"],
+        ["authme.player.login", "authme.player.register"],
+        "deny",
+      ).groups.default.nodes,
+    ).toEqual([
+      { type: "permission", key: "authme.player.login", value: false },
+      {
+        type: "permission",
+        key: "authme.player.register",
+        value: false,
+        context: { world: "nether" },
+      },
+      { type: "permission", key: "authme.player.logout", value: false },
+      { type: "permission", key: "authme.player.register", value: false },
+    ]);
+  });
+
+  it("removes only matching global permissions in a batch", () => {
+    const preview = previewPermissionBatch(
+      batchBackup,
+      ["default", "member"],
+      ["authme.player.login", "authme.player.register"],
+      "remove",
+    );
+
+    expect(preview.changeCount).toBe(1);
+    expect(preview.targets[0]).toMatchObject({
+      removals: ["authme.player.login"],
+      unchanged: ["authme.player.register"],
+    });
+    expect(
+      applyPermissionBatch(
+        batchBackup,
+        ["default", "member"],
+        ["authme.player.login", "authme.player.register"],
+        "remove",
+      ).groups.default.nodes,
+    ).toEqual([
+      {
+        type: "permission",
+        key: "authme.player.register",
+        value: false,
+        context: { world: "nether" },
+      },
+      { type: "permission", key: "authme.player.logout", value: false },
     ]);
   });
 });

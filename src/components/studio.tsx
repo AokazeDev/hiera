@@ -138,13 +138,22 @@ export function Studio() {
     setBackup(next);
   }
 
-  function applyPermissions(nodes: string[], groupNames: string[]) {
+  function applyPermissions(
+    nodes: string[],
+    groupNames: string[],
+    decision: import("@/lib/luckperms").PermissionBatchDecision,
+  ) {
     if (!backup) return;
-    const preview = previewPermissionBatch(backup, groupNames, nodes);
-    if (preview.additionCount === 0) return;
+    const preview = previewPermissionBatch(backup, groupNames, nodes, decision);
+    if (preview.changeCount === 0) return;
+    const operation = {
+      grant: "Conceder",
+      deny: "Denegar",
+      remove: "Eliminar",
+    }[decision];
     updateBackup(
-      applyPermissionBatch(backup, groupNames, nodes),
-      `Aplicar ${preview.additionCount} permisos de AuthMe Reloaded a ${preview.targets.length} grupos`,
+      applyPermissionBatch(backup, groupNames, nodes, decision),
+      `${operation} ${preview.changeCount} permisos de AuthMe Reloaded en ${preview.targets.length} grupos`,
     );
   }
 
