@@ -6,6 +6,8 @@ export function BackupDiagnostics({ backup }: { backup: LuckPermsBackup }) {
   const diagnostics = diagnoseBackup(backup);
   const issueCount =
     diagnostics.duplicatePermissions.length +
+    diagnostics.repeatedNodes.length +
+    diagnostics.dangerousPermissions.length +
     diagnostics.missingGroupReferences.length +
     diagnostics.inheritanceCycles.length;
 
@@ -32,6 +34,37 @@ export function BackupDiagnostics({ backup }: { backup: LuckPermsBackup }) {
             <code>{issue.key}</code> está repetido en{" "}
             {issue.owner === "group" ? "el grupo" : "el usuario"}{" "}
             <strong>{issue.ownerId}</strong>.
+          </li>
+        ))}
+        {diagnostics.contradictoryPermissions.map((issue) => (
+          <li
+            key={`contradiction-${issue.owner}-${issue.ownerId}-${issue.nodeIndexes.join("-")}`}
+          >
+            <code>{issue.key}</code> tiene concesiones y denegaciones en el
+            mismo contexto de{" "}
+            {issue.owner === "group" ? "el grupo" : "el usuario"}{" "}
+            <strong>{issue.ownerId}</strong>.
+          </li>
+        ))}
+        {diagnostics.repeatedNodes.map((issue) => (
+          <li
+            key={`repeated-${issue.owner}-${issue.ownerId}-${issue.type}-${issue.key}-${issue.nodeIndexes.join("-")}`}
+          >
+            El nodo{" "}
+            <code>
+              {issue.type}: {issue.key}
+            </code>{" "}
+            se repite en {issue.owner === "group" ? "el grupo" : "el usuario"}{" "}
+            <strong>{issue.ownerId}</strong>.
+          </li>
+        ))}
+        {diagnostics.dangerousPermissions.map((issue, index) => (
+          <li
+            key={`dangerous-${issue.owner}-${issue.ownerId}-${issue.key}-${index}`}
+          >
+            Revisar <code>{issue.key}</code> en{" "}
+            {issue.owner === "group" ? "el grupo" : "el usuario"}{" "}
+            <strong>{issue.ownerId}</strong>: {issue.reasons.join(", ")}.
           </li>
         ))}
         {diagnostics.missingGroupReferences.map((issue) => (

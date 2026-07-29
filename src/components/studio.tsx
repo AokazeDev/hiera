@@ -34,6 +34,7 @@ import {
   createGroup,
   deleteGroup,
   emptyBackupHistory,
+  parseLuckPermsBackup,
   previewPermissionBatch,
   recordBackupChange,
   redoBackupChange,
@@ -42,6 +43,7 @@ import {
   removeUserDirectPermission,
   removeUserMembership,
   renameGroup,
+  serializeLuckPermsBackup,
   setDirectPermissionContext,
   setDirectPermissionValue,
   setUserDirectPermissionContext,
@@ -91,6 +93,7 @@ export function Studio() {
     "editor" | "catalog" | "comparison" | "effective" | "inheritance"
   >("editor");
   const [feedback, setFeedback] = useState<StudioFeedbackMessage | null>(null);
+  const [importIssues, setImportIssues] = useState<string[]>([]);
   const catalog = new Map(
     authMeReloaded.permissions.map((permission) => [
       permission.node,
@@ -128,28 +131,33 @@ export function Studio() {
   function importBackup(file: File) {
     const reader = new FileReader();
     reader.onload = () => {
-      try {
-        const parsed = JSON.parse(String(reader.result)) as LuckPermsBackup;
-        if (!parsed.groups || typeof parsed.groups !== "object")
-          throw new Error("No contiene grupos de LuckPerms.");
-        setBackup(parsed);
-        setOriginalBackup(parsed);
-        setSelectedGroup(Object.keys(parsed.groups)[0] ?? null);
-        setSelectedUser(null);
-        setHistory(emptyBackupHistory);
-        setPendingTransfer(null);
-        setDraggedPermission(null);
-        setDraggedCatalogPermission(null);
-        setPendingCatalogPermission(null);
-        setPermissionProvenance(null);
-        setActiveContext({});
-        announce(`Backup ${file.name} importado solo en esta sesión.`);
-      } catch (error) {
-        window.alert(
-          `No se pudo leer el backup: ${error instanceof Error ? error.message : "JSON invalido"}`,
+      const result = parseLuckPermsBackup(String(reader.result));
+      if (!result.backup) {
+        setImportIssues(
+          result.issues.map(
+            (issue) =>
+              `${issue.path}: ${issue.message}${issue.line ? ` Línea ${issue.line}, columna ${issue.column}.` : ""}`,
+          ),
         );
+        return;
       }
+      const parsed = result.backup;
+      setImportIssues([]);
+      setBackup(parsed);
+      setOriginalBackup(parsed);
+      setSelectedGroup(Object.keys(parsed.groups)[0] ?? null);
+      setSelectedUser(null);
+      setHistory(emptyBackupHistory);
+      setPendingTransfer(null);
+      setDraggedPermission(null);
+      setDraggedCatalogPermission(null);
+      setPendingCatalogPermission(null);
+      setPermissionProvenance(null);
+      setActiveContext({});
+      announce(`Backup ${file.name} importado solo en esta sesión.`);
     };
+    reader.onerror = () =>
+      setImportIssues(["No se pudo leer el archivo seleccionado."]);
     reader.readAsText(file);
   }
 
@@ -420,9 +428,9 @@ export function Studio() {
     setSelectedUser(null);
   }
 
-  function exportBackup() {
+  function exportBackup(stableFormat: boolean) {
     if (!backup) return;
-    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+    const blob = new Blob([serializeLuckPermsBackup(backup, stableFormat)], {
       type: "application/json",
     });
     const link = document.createElement("a");
@@ -430,7 +438,9 @@ export function Studio() {
     link.download = "hiera-luckperms-backup.json";
     link.click();
     URL.revokeObjectURL(link.href);
-    announce("Descarga de hiera-luckperms-backup.json iniciada.");
+    announce(
+      `Descarga de hiera-luckperms-backup.json${stableFormat ? " con orden estable" : ""} iniciada.`,
+    );
   }
 
   function undo() {
@@ -545,9 +555,12 @@ export function Studio() {
           className="sr-only"
           type="file"
           accept="application/json,.json"
-          onChange={(event) =>
-            event.target.files?.[0] && importBackup(event.target.files[0])
-          }
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.target.value = "";
+            if (file) importBackup(file);
+          }}
+          aria-label="Seleccionar un backup JSON de LuckPerms"
         />
       </header>
       {feedback && (
@@ -560,6 +573,16 @@ export function Studio() {
           Importa un export de LuckPerms o explora un catálogo verificado. Las
           modificaciones quedan en esta sesión hasta que exportes el JSON.
         </p>
+        {importIssues.length > 0 && (
+          <div className="import-validation-error" role="alert">
+            <strong>No se pudo importar el backup.</strong>
+            <ul>
+              {importIssues.map((issue) => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
       <section className="studio-grid" data-studio-pane>
         <BackupRail

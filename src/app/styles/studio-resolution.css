@@ -446,6 +446,29 @@
   font-size: 13px;
   line-height: 1.5;
 }
+.export-format-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 11px 0;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.35;
+}
+.export-format-option input {
+  margin: 2px 0 0;
+  accent-color: var(--olive);
+}
+.export-format-option span {
+  display: grid;
+  gap: 2px;
+}
+.export-format-option small {
+  color: var(--muted);
+  font-size: 11px;
+}
 .export-diff {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);

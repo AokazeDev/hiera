@@ -12,7 +12,7 @@ import type { LuckPermsBackup, LuckPermsNode } from "@/lib/permissions";
 type ExportPreviewProps = {
   original: LuckPermsBackup;
   backup: LuckPermsBackup;
-  onExport: () => void;
+  onExport: (stableFormat: boolean) => void;
 };
 
 function describeNode(node: LuckPermsNode) {
@@ -68,6 +68,7 @@ export function ExportPreview({
 }: ExportPreviewProps) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [open, setOpen] = useState(false);
+  const [stableFormat, setStableFormat] = useState(false);
   const diff = diffBackups(original, backup);
 
   useEffect(() => {
@@ -79,7 +80,7 @@ export function ExportPreview({
   }
 
   function exportBackup() {
-    onExport();
+    onExport(stableFormat);
     closeDialog();
   }
 
@@ -136,6 +137,19 @@ export function ExportPreview({
               </ul>
             </div>
           )}
+          <label className="export-format-option">
+            <input
+              type="checkbox"
+              checked={stableFormat}
+              onChange={(event) => setStableFormat(event.target.checked)}
+            />
+            <span>
+              Orden estable para Git
+              <small>
+                Ordena las claves de objetos sin cambiar el orden de los nodos.
+              </small>
+            </span>
+          </label>
           <footer>
             <button type="button" className="line-button" onClick={closeDialog}>
               Volver a editar

@@ -76,6 +76,22 @@
   line-height: 1.5;
   margin: 22px 0 0;
 }
+.import-validation-error {
+  max-width: 680px;
+  margin-top: 18px;
+  border-left: 3px solid #a76868;
+  background: #f0dede;
+  color: #7a2525;
+  padding: 11px 13px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.import-validation-error ul {
+  display: grid;
+  gap: 4px;
+  margin: 7px 0 0;
+  padding-left: 18px;
+}
 .studio-grid {
   display: grid;
   grid-template-columns: 230px minmax(500px, 1fr) 270px;

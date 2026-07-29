@@ -20,8 +20,30 @@ export type MissingGroupReferenceIssue = {
 
 export type InheritanceCycleIssue = { groups: string[] };
 
+export type ContradictoryPermissionIssue = DuplicatePermissionIssue;
+
+export type RepeatedNodeIssue = {
+  owner: NodeOwner;
+  ownerId: string;
+  type: string;
+  key: string;
+  nodeIndexes: number[];
+};
+
+export type DangerousPermissionIssue = {
+  owner: NodeOwner;
+  ownerId: string;
+  key: string;
+  reasons: Array<
+    "comodín" | "administración" | "bypass" | "gestión del servidor"
+  >;
+};
+
 export type BackupDiagnostics = {
   duplicatePermissions: DuplicatePermissionIssue[];
+  contradictoryPermissions: ContradictoryPermissionIssue[];
+  repeatedNodes: RepeatedNodeIssue[];
+  dangerousPermissions: DangerousPermissionIssue[];
   missingGroupReferences: MissingGroupReferenceIssue[];
   inheritanceCycles: InheritanceCycleIssue[];
 };
@@ -32,6 +54,17 @@ function contextFingerprint(node: LuckPermsNode): string {
       left.localeCompare(right),
     ),
   );
+}
+
+function nodeFingerprint(node: LuckPermsNode): string {
+  return JSON.stringify({
+    type: node.type,
+    key: node.key,
+    value: node.value,
+    context: Object.entries(node.context ?? {}).sort(([left], [right]) =>
+      left.localeCompare(right),
+    ),
+  });
 }
 
 function findDuplicatePermissions(
@@ -62,6 +95,50 @@ function findDuplicatePermissions(
         ]
       : [],
   );
+}
+
+function findRepeatedNodes(
+  owner: NodeOwner,
+  ownerId: string,
+  nodes: LuckPermsNode[],
+): RepeatedNodeIssue[] {
+  const indexesByNode = new Map<string, number[]>();
+  nodes.forEach((node, index) => {
+    const fingerprint = nodeFingerprint(node);
+    indexesByNode.set(fingerprint, [
+      ...(indexesByNode.get(fingerprint) ?? []),
+      index,
+    ]);
+  });
+  return [...indexesByNode.values()].flatMap((indexes) => {
+    if (indexes.length < 2) return [];
+    const node = nodes[indexes[0]];
+    return [
+      { owner, ownerId, type: node.type, key: node.key, nodeIndexes: indexes },
+    ];
+  });
+}
+
+function findDangerousPermissions(
+  owner: NodeOwner,
+  ownerId: string,
+  nodes: LuckPermsNode[],
+): DangerousPermissionIssue[] {
+  return nodes.flatMap((node) => {
+    if (node.type !== "permission" || !node.value) return [];
+    const key = node.key.toLowerCase();
+    const reasons: DangerousPermissionIssue["reasons"] = [];
+    if (key === "*" || key.endsWith(".*")) reasons.push("comodín");
+    if (/(^|\.)admin(\.|$)|(^|\.)op(\.|$)/.test(key))
+      reasons.push("administración");
+    if (key.includes("bypass")) reasons.push("bypass");
+    if (
+      /(^|\.)(shutdown|stop|restart|reload|manage|management)(\.|$)/.test(key)
+    ) {
+      reasons.push("gestión del servidor");
+    }
+    return reasons.length ? [{ owner, ownerId, key: node.key, reasons }] : [];
+  });
 }
 
 function normalizeCycle(cycle: string[]): string[] {
@@ -114,11 +191,17 @@ function findInheritanceCycles(
 /** Inspects imported data without changing it, including legacy-invalid structures. */
 export function diagnoseBackup(backup: LuckPermsBackup): BackupDiagnostics {
   const duplicatePermissions: DuplicatePermissionIssue[] = [];
+  const repeatedNodes: RepeatedNodeIssue[] = [];
+  const dangerousPermissions: DangerousPermissionIssue[] = [];
   const missingGroupReferences: MissingGroupReferenceIssue[] = [];
 
   for (const [groupName, group] of Object.entries(backup.groups)) {
     duplicatePermissions.push(
       ...findDuplicatePermissions("group", groupName, group.nodes),
+    );
+    repeatedNodes.push(...findRepeatedNodes("group", groupName, group.nodes));
+    dangerousPermissions.push(
+      ...findDangerousPermissions("group", groupName, group.nodes),
     );
     group.nodes.forEach((node, nodeIndex) => {
       if (node.type !== "inheritance" || !node.value) return;
@@ -138,6 +221,10 @@ export function diagnoseBackup(backup: LuckPermsBackup): BackupDiagnostics {
   for (const [userId, user] of Object.entries(backup.users ?? {})) {
     duplicatePermissions.push(
       ...findDuplicatePermissions("user", userId, user.nodes),
+    );
+    repeatedNodes.push(...findRepeatedNodes("user", userId, user.nodes));
+    dangerousPermissions.push(
+      ...findDangerousPermissions("user", userId, user.nodes),
     );
     user.nodes.forEach((node, nodeIndex) => {
       if (node.type !== "inheritance" || !node.value) return;
@@ -164,6 +251,19 @@ export function diagnoseBackup(backup: LuckPermsBackup): BackupDiagnostics {
 
   return {
     duplicatePermissions,
+    contradictoryPermissions: duplicatePermissions.filter((issue) => {
+      const nodes =
+        issue.owner === "group"
+          ? backup.groups[issue.ownerId]?.nodes
+          : backup.users?.[issue.ownerId]?.nodes;
+      return Boolean(
+        nodes &&
+          new Set(issue.nodeIndexes.map((index) => nodes[index]?.value)).size >
+            1,
+      );
+    }),
+    repeatedNodes,
+    dangerousPermissions,
     missingGroupReferences,
     inheritanceCycles: findInheritanceCycles(backup),
   };
