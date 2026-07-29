@@ -31,6 +31,8 @@ type ResolutionPanelProps = {
   onAddInheritance: (parentName: string) => void;
   onRemoveInheritance: (nodeIndex: number) => void;
   onPreparePermissionTransfer: (sourceGroup: string, nodeIndex: number) => void;
+  activeContext: PermissionContext;
+  onActiveContextChange: (context: PermissionContext) => void;
   onInspectPermissionOrigin: (permission: {
     key: string;
     origin: string;
@@ -52,6 +54,8 @@ export function ResolutionPanel({
   onAddInheritance,
   onRemoveInheritance,
   onPreparePermissionTransfer,
+  activeContext,
+  onActiveContextChange,
   onInspectPermissionOrigin,
   onStartPermissionDrag,
   onEndPermissionDrag,
@@ -64,7 +68,6 @@ export function ResolutionPanel({
   const [sort, setSort] = useState<
     "name" | "status" | "category" | "origin" | "recommendation"
   >("name");
-  const [activeContext, setActiveContext] = useState<PermissionContext>({});
   const [isEditingActiveContext, setIsEditingActiveContext] = useState(false);
   const group = backup && groupName ? backup.groups[groupName] : null;
   const effective =
@@ -115,7 +118,7 @@ export function ResolutionPanel({
                     conflicto contextual
                   </small>
                 )}
-                {groupName && (
+                {(groupName || userId) && (
                   <>
                     <button
                       type="button"
@@ -130,34 +133,38 @@ export function ResolutionPanel({
                     >
                       Ver origen
                     </button>
-                    <span
-                      className="permission-drag-handle"
-                      draggable
-                      aria-hidden="true"
-                      onDragStart={(event) => {
-                        event.dataTransfer.effectAllowed = "copyMove";
-                        event.dataTransfer.setData("text/plain", node.key);
-                        onStartPermissionDrag(
-                          node.origin,
-                          node.originNodeIndex,
-                        );
-                      }}
-                      onDragEnd={onEndPermissionDrag}
-                    >
-                      <GripVertical size={14} aria-hidden="true" />
-                    </span>
-                    <button
-                      type="button"
-                      className="effective-permission-transfer"
-                      onClick={() =>
-                        onPreparePermissionTransfer(
-                          node.origin,
-                          node.originNodeIndex,
-                        )
-                      }
-                    >
-                      Cambiar
-                    </button>
+                    {groupName && (
+                      <>
+                        <span
+                          className="permission-drag-handle"
+                          draggable
+                          aria-hidden="true"
+                          onDragStart={(event) => {
+                            event.dataTransfer.effectAllowed = "copyMove";
+                            event.dataTransfer.setData("text/plain", node.key);
+                            onStartPermissionDrag(
+                              node.origin,
+                              node.originNodeIndex,
+                            );
+                          }}
+                          onDragEnd={onEndPermissionDrag}
+                        >
+                          <GripVertical size={14} aria-hidden="true" />
+                        </span>
+                        <button
+                          type="button"
+                          className="effective-permission-transfer"
+                          onClick={() =>
+                            onPreparePermissionTransfer(
+                              node.origin,
+                              node.originNodeIndex,
+                            )
+                          }
+                        >
+                          Cambiar
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
               </div>
@@ -199,7 +206,7 @@ export function ResolutionPanel({
               context={activeContext}
               nodeKey="la resolución"
               validateContext={() => null}
-              onSave={setActiveContext}
+              onSave={onActiveContextChange}
               onClose={() => setIsEditingActiveContext(false)}
             />
           )}

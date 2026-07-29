@@ -18,3 +18,4 @@ export * from "./luckperms/permission-search";
 export * from "./luckperms/permission-sorting";
 export * from "./luckperms/permission-transfers";
 export * from "./luckperms/user-memberships";
+export * from "./luckperms/user-permission-provenance";

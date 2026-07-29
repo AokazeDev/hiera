@@ -82,6 +82,7 @@ export function Studio() {
     useState<PendingCatalogPermission | null>(null);
   const [permissionProvenance, setPermissionProvenance] =
     useState<PermissionProvenance | null>(null);
+  const [activeContext, setActiveContext] = useState<PermissionContext>({});
   const [workspace, setWorkspace] = useState<
     "editor" | "catalog" | "comparison" | "inheritance"
   >("editor");
@@ -130,6 +131,7 @@ export function Studio() {
         setDraggedCatalogPermission(null);
         setPendingCatalogPermission(null);
         setPermissionProvenance(null);
+        setActiveContext({});
       } catch (error) {
         window.alert(
           `No se pudo leer el backup: ${error instanceof Error ? error.message : "JSON invalido"}`,
@@ -430,7 +432,7 @@ export function Studio() {
   }
 
   function inspectPermissionOrigin(provenance: PermissionProvenance) {
-    if (!selectedGroup) return;
+    if (!selectedGroup && !selectedUser) return;
     setPermissionProvenance(provenance);
     setWorkspace("inheritance");
   }
@@ -549,6 +551,8 @@ export function Studio() {
           <InheritanceGraph
             backup={backup}
             groupName={selectedGroup}
+            userId={selectedUser}
+            activeContext={activeContext}
             onSelectGroup={selectGroup}
             draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
             draggingCatalogPermission={Boolean(draggedCatalogPermission)}
@@ -613,6 +617,8 @@ export function Studio() {
           onAddInheritance={addInheritance}
           onRemoveInheritance={removeInheritance}
           onPreparePermissionTransfer={prepareGroupPermissionTransfer}
+          activeContext={activeContext}
+          onActiveContextChange={setActiveContext}
           onInspectPermissionOrigin={inspectPermissionOrigin}
           onStartPermissionDrag={(sourceGroup, nodeIndex) =>
             startPermissionDrag(nodeIndex, sourceGroup)

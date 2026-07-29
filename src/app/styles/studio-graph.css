@@ -73,6 +73,35 @@
   border: 1px solid #526b10;
   background: #f7f5ee;
 }
+.resolution-graph-node {
+  display: flex;
+  align-items: center;
+  min-width: 118px;
+  gap: 6px;
+  border: 1px solid #7b8379;
+  background: #f7f5ee;
+  color: var(--ink);
+  padding: 9px 11px;
+  font:
+    12px var(--font-geist-mono),
+    monospace;
+  box-shadow: 3px 3px 0 #d6d6c9;
+}
+.resolution-graph-node.is-context {
+  max-width: 240px;
+  border-color: #718318;
+  background: #edf0d8;
+}
+.resolution-graph-node.is-user {
+  border-color: #526b10;
+  background: #dce9a7;
+}
+.resolution-graph-node .react-flow__handle {
+  width: 6px;
+  height: 6px;
+  border: 1px solid #526b10;
+  background: #f7f5ee;
+}
 .inheritance-graph-note {
   margin: 0;
   color: var(--muted);

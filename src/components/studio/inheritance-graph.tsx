@@ -10,17 +10,21 @@ import {
   Position,
   ReactFlow,
 } from "@xyflow/react";
-import { Info, TriangleAlert } from "lucide-react";
+import { Info, MapPin, TriangleAlert, UserRound } from "lucide-react";
 import { useState } from "react";
 import {
   buildInheritanceGraph,
   buildPermissionProvenanceGraph,
+  buildUserPermissionProvenanceGraph,
+  type PermissionContext,
 } from "@/lib/luckperms";
 import type { LuckPermsBackup } from "@/lib/permissions";
 
 type InheritanceGraphProps = {
   backup: LuckPermsBackup | null;
   groupName: string | null;
+  userId: string | null;
+  activeContext: PermissionContext;
   onSelectGroup: (groupName: string) => void;
   draggingPermissionFrom: string | null;
   draggingCatalogPermission: boolean;
@@ -35,6 +39,7 @@ type InheritanceGraphProps = {
 
 type GraphNodeData = {
   label: string;
+  groupName: string;
   missing: boolean;
   selected: boolean;
   onSelectGroup: (groupName: string) => void;
@@ -50,14 +55,14 @@ function GroupGraphNode({ data }: NodeProps<Node<GraphNodeData>>) {
     !data.missing &&
     (data.draggingCatalogPermission ||
       (data.draggingPermissionFrom !== null &&
-        data.draggingPermissionFrom !== data.label));
+        data.draggingPermissionFrom !== data.groupName));
 
   return (
     <button
       type="button"
       className={`inheritance-graph-node${data.selected ? " is-selected" : ""}${data.missing ? " is-missing" : ""}${isDropTarget ? " is-drop-target" : ""}`}
       disabled={data.missing}
-      onClick={() => data.onSelectGroup(data.label)}
+      onClick={() => data.onSelectGroup(data.groupName)}
       onDragOver={(event) => {
         if (!acceptsDrop) return;
         event.preventDefault();
@@ -70,9 +75,9 @@ function GroupGraphNode({ data }: NodeProps<Node<GraphNodeData>>) {
         setIsDropTarget(false);
         if (!acceptsDrop) return;
         if (data.draggingCatalogPermission) {
-          data.onDropCatalogPermission(data.label);
+          data.onDropCatalogPermission(data.groupName);
         } else {
-          data.onDropPermission(data.label);
+          data.onDropPermission(data.groupName);
         }
       }}
     >
@@ -86,9 +91,35 @@ function GroupGraphNode({ data }: NodeProps<Node<GraphNodeData>>) {
 
 const nodeTypes = { group: GroupGraphNode };
 
+type ResolutionGraphNodeData = {
+  label: string;
+  kind: "context" | "user";
+};
+
+function ResolutionGraphNode({
+  data,
+}: NodeProps<Node<ResolutionGraphNodeData>>) {
+  const Icon = data.kind === "user" ? UserRound : MapPin;
+  return (
+    <div className={`resolution-graph-node is-${data.kind}`}>
+      <Handle type="target" position={Position.Left} isConnectable={false} />
+      <Icon size={13} aria-hidden="true" />
+      <span>{data.label}</span>
+      <Handle type="source" position={Position.Right} isConnectable={false} />
+    </div>
+  );
+}
+
+const resolutionNodeTypes = {
+  group: GroupGraphNode,
+  resolution: ResolutionGraphNode,
+};
+
 export function InheritanceGraph({
   backup,
   groupName,
+  userId,
+  activeContext,
   onSelectGroup,
   draggingPermissionFrom,
   draggingCatalogPermission,
@@ -96,18 +127,26 @@ export function InheritanceGraph({
   onDropCatalogPermission,
   permissionProvenance,
 }: InheritanceGraphProps) {
+  const isUserProvenance = Boolean(backup && userId && permissionProvenance);
   const graph =
-    backup && groupName
-      ? permissionProvenance
-        ? buildPermissionProvenanceGraph(
-            backup,
-            groupName,
-            permissionProvenance.origin,
-          )
-        : buildInheritanceGraph(backup, groupName)
-      : null;
+    backup && userId && permissionProvenance
+      ? buildUserPermissionProvenanceGraph(
+          backup,
+          userId,
+          permissionProvenance.origin,
+          activeContext,
+        )
+      : backup && groupName
+        ? permissionProvenance
+          ? buildPermissionProvenanceGraph(
+              backup,
+              groupName,
+              permissionProvenance.origin,
+            )
+          : buildInheritanceGraph(backup, groupName)
+        : null;
 
-  if (!backup || !groupName || !graph) {
+  if (!backup || (!groupName && !userId) || !graph) {
     return (
       <section className="workspace inheritance-graph-empty">
         <Info size={21} aria-hidden="true" />
@@ -117,26 +156,39 @@ export function InheritanceGraph({
   }
 
   const rows = new Map<number, number>();
-  const nodes: Node<GraphNodeData>[] = graph.nodes.map((node) => {
-    const row = rows.get(node.depth) ?? 0;
-    rows.set(node.depth, row + 1);
-    return {
-      id: node.id,
-      type: "group",
-      position: { x: node.depth * 250, y: row * 100 },
-      data: {
-        label: node.label,
-        missing: node.missing,
-        selected: node.id === groupName,
-        onSelectGroup,
-        draggingPermissionFrom,
-        draggingCatalogPermission,
-        onDropPermission,
-        onDropCatalogPermission,
-      },
-      selectable: !node.missing,
-    };
-  });
+  const nodes: Node<GraphNodeData | ResolutionGraphNodeData>[] =
+    graph.nodes.map((node) => {
+      const row = rows.get(node.depth) ?? 0;
+      rows.set(node.depth, row + 1);
+      if ("kind" in node && node.kind !== "group") {
+        return {
+          id: node.id,
+          type: "resolution",
+          position: { x: node.depth * 250, y: row * 100 },
+          data: { label: node.label, kind: node.kind },
+          draggable: false,
+          selectable: false,
+          focusable: false,
+        };
+      }
+      return {
+        id: node.id,
+        type: "group",
+        position: { x: node.depth * 250, y: row * 100 },
+        data: {
+          label: node.label,
+          groupName: "kind" in node ? node.label : node.id,
+          missing: "missing" in node ? node.missing : false,
+          selected: node.label === groupName,
+          onSelectGroup,
+          draggingPermissionFrom,
+          draggingCatalogPermission,
+          onDropPermission,
+          onDropCatalogPermission,
+        },
+        selectable: !("missing" in node && node.missing),
+      };
+    });
   const edges: Edge[] = graph.edges.map((edge) => ({
     ...edge,
     type: "smoothstep",
@@ -157,9 +209,13 @@ export function InheritanceGraph({
           </h2>
           <p className="editor-intro">
             {permissionProvenance
-              ? permissionProvenance.inherited
-                ? `Esta es la ruta activa desde ${groupName} hasta el grupo que define directamente el permiso.`
-                : `${groupName} define este permiso directamente; no interviene una herencia.`
+              ? isUserProvenance
+                ? permissionProvenance.inherited
+                  ? "El contexto activo se aplica al usuario y esta es una ruta de membresía hasta el grupo que define el permiso."
+                  : "El contexto activo se aplica al usuario, que define este permiso directamente."
+                : permissionProvenance.inherited
+                  ? `Esta es la ruta activa desde ${groupName} hasta el grupo que define directamente el permiso.`
+                  : `${groupName} define este permiso directamente; no interviene una herencia.`
               : "Las conexiones salen del grupo que hereda hacia su grupo padre. Usa los controles para acercar, alejar o reencuadrar el mapa. Mientras arrastras un permiso desde el editor o catálogo, suéltalo sobre un grupo visible para revisar la operación."}
           </p>
         </div>
@@ -170,10 +226,14 @@ export function InheritanceGraph({
       </header>
       <div className="inheritance-graph-canvas">
         <ReactFlow
-          aria-label={`Grafo de herencias de ${groupName}`}
+          aria-label={
+            isUserProvenance
+              ? "Grafo de procedencia de permiso de usuario"
+              : `Grafo de herencias de ${groupName}`
+          }
           nodes={nodes}
           edges={edges}
-          nodeTypes={nodeTypes}
+          nodeTypes={isUserProvenance ? resolutionNodeTypes : nodeTypes}
           nodesDraggable={false}
           nodesConnectable={false}
           elementsSelectable
@@ -183,7 +243,17 @@ export function InheritanceGraph({
           fitViewOptions={{ padding: 0.3 }}
           minZoom={0.35}
           maxZoom={1.5}
-          onNodeClick={(_, node) => onSelectGroup(node.id)}
+          onNodeClick={(_, node) => {
+            const graphNode = graph.nodes.find(
+              (candidate) => candidate.id === node.id,
+            );
+            if (
+              graphNode &&
+              (!("kind" in graphNode) || graphNode.kind === "group")
+            ) {
+              onSelectGroup(graphNode.label);
+            }
+          }}
         >
           <Background gap={20} size={1} color="#c6c7bb" />
           <Controls showInteractive={false} />
@@ -196,11 +266,21 @@ export function InheritanceGraph({
         >
           {graph.nodes.map((node, index) => (
             <li key={node.id}>
-              <button type="button" onClick={() => onSelectGroup(node.id)}>
-                {node.label}
-              </button>
+              {"kind" in node && node.kind !== "group" ? (
+                <span>{node.label}</span>
+              ) : (
+                <button type="button" onClick={() => onSelectGroup(node.label)}>
+                  {node.label}
+                </button>
+              )}
               {index < graph.nodes.length - 1 && (
-                <span aria-hidden="true"> hereda de </span>
+                <span aria-hidden="true">
+                  {isUserProvenance && index === 0
+                    ? " resuelve para "
+                    : isUserProvenance && index === 1
+                      ? " pertenece a "
+                      : " hereda de "}
+                </span>
               )}
             </li>
           ))}
