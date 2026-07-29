@@ -93,7 +93,7 @@ export function ResolutionPanel({
                     })
                   }
                 >
-                  Ver origen
+                  Abrir ruta
                 </button>
                 {groupName && (
                   <>

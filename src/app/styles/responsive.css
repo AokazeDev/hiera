@@ -171,6 +171,16 @@
     align-items: start;
     flex-direction: column;
   }
+  .effective-permission-nodes {
+    margin-left: 18px;
+  }
+  .effective-permission-nodes li {
+    grid-template-columns: 14px minmax(0, 1fr);
+  }
+  .effective-permission-actions {
+    grid-column: 2;
+    justify-content: start;
+  }
   .catalog-controls,
   .workspace-title {
     align-items: start;

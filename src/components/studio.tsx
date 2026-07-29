@@ -6,12 +6,14 @@ import {
   FilePenLine,
   FileUp,
   GitCompareArrows,
+  ListFilter,
   Network,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { BackupRail } from "@/components/studio/backup-rail";
 import { CatalogPanel } from "@/components/studio/catalog-panel";
+import { EffectivePermissionBrowser } from "@/components/studio/effective-permission-browser";
 import { ExportPreview } from "@/components/studio/export-preview";
 import { GroupComparison } from "@/components/studio/group-comparison";
 import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
@@ -86,7 +88,7 @@ export function Studio() {
     useState<PermissionProvenance | null>(null);
   const [activeContext, setActiveContext] = useState<PermissionContext>({});
   const [workspace, setWorkspace] = useState<
-    "editor" | "catalog" | "comparison" | "inheritance"
+    "editor" | "catalog" | "comparison" | "effective" | "inheritance"
   >("editor");
   const [feedback, setFeedback] = useState<StudioFeedbackMessage | null>(null);
   const catalog = new Map(
@@ -515,6 +517,14 @@ export function Studio() {
             </button>
             <button
               type="button"
+              className={workspace === "effective" ? "is-active" : ""}
+              aria-pressed={workspace === "effective"}
+              onClick={() => setWorkspace("effective")}
+            >
+              <ListFilter size={15} /> Resolver
+            </button>
+            <button
+              type="button"
               className={workspace === "inheritance" ? "is-active" : ""}
               aria-pressed={workspace === "inheritance"}
               onClick={() => setWorkspace("inheritance")}
@@ -574,6 +584,20 @@ export function Studio() {
         />
         {workspace === "comparison" ? (
           <GroupComparison backup={backup} initialGroup={selectedGroup} />
+        ) : workspace === "effective" ? (
+          <EffectivePermissionBrowser
+            backup={backup}
+            groupName={selectedGroup}
+            userId={selectedUser}
+            activeContext={activeContext}
+            catalog={catalog}
+            onInspectPermissionOrigin={inspectPermissionOrigin}
+            onPreparePermissionTransfer={prepareGroupPermissionTransfer}
+            onStartPermissionDrag={(sourceGroup, nodeIndex) =>
+              startPermissionDrag(nodeIndex, sourceGroup)
+            }
+            onEndPermissionDrag={() => setDraggedPermission(null)}
+          />
         ) : workspace === "inheritance" ? (
           <InheritanceGraph
             backup={backup}
