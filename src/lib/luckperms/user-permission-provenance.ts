@@ -13,6 +13,11 @@ export type UserPermissionProvenanceNode = {
 export type UserPermissionProvenanceGraph = {
   nodes: UserPermissionProvenanceNode[];
   edges: Array<{ id: string; source: string; target: string }>;
+  summary: {
+    nodeLimit: number;
+    omittedNodes: number;
+    truncated: boolean;
+  };
 };
 
 function formatActiveContext(activeContext: PermissionContext): string {
@@ -37,7 +42,13 @@ export function buildUserPermissionProvenanceGraph(
   activeContext: PermissionContext,
 ): UserPermissionProvenanceGraph {
   const user = backup.users?.[userId];
-  if (!user) return { nodes: [], edges: [] };
+  if (!user) {
+    return {
+      nodes: [],
+      edges: [],
+      summary: { nodeLimit: 80, omittedNodes: 0, truncated: false },
+    };
+  }
 
   const userIdInGraph = `user:${userId}`;
   const contextId = "active-context";
@@ -63,14 +74,26 @@ export function buildUserPermissionProvenanceGraph(
     },
   ];
 
-  if (origin === (user.username ?? userId)) return { nodes, edges };
+  if (origin === (user.username ?? userId)) {
+    return {
+      nodes,
+      edges,
+      summary: { nodeLimit: 80, omittedNodes: 0, truncated: false },
+    };
+  }
 
   const route = getUserMemberships(user)
     .map((membership) =>
       buildPermissionProvenanceGraph(backup, membership, origin),
     )
     .find((candidate) => candidate.nodes.length > 0);
-  if (!route) return { nodes, edges };
+  if (!route) {
+    return {
+      nodes,
+      edges,
+      summary: { nodeLimit: 80, omittedNodes: 0, truncated: false },
+    };
+  }
 
   const groupNodes = route.nodes.map((node) => ({
     id: `group:${node.id}`,
@@ -97,5 +120,6 @@ export function buildUserPermissionProvenanceGraph(
         target: `group:${edge.target}`,
       })),
     ],
+    summary: route.summary,
   };
 }

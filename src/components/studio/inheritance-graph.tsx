@@ -221,7 +221,7 @@ export function InheritanceGraph({
         </div>
         <p className="editor-summary">
           {graph.nodes.length}{" "}
-          {permissionProvenance ? "grupos en la ruta" : "grupos visibles"}
+          {permissionProvenance ? "nodos en la ruta" : "grupos visibles"}
         </p>
       </header>
       <div className="inheritance-graph-canvas">
@@ -259,6 +259,13 @@ export function InheritanceGraph({
           <Controls showInteractive={false} />
         </ReactFlow>
       </div>
+      {graph.summary.truncated && (
+        <output className="inheritance-graph-limit" aria-live="polite">
+          El mapa muestra hasta {graph.summary.nodeLimit} grupos. Se omitieron{" "}
+          {graph.summary.omittedNodes} grupos para mantener el estudio
+          navegable; usa la lista de grupos para continuar la inspección.
+        </output>
+      )}
       {permissionProvenance && graph.nodes.length > 0 && (
         <ol
           className="permission-provenance-list"
@@ -288,7 +295,9 @@ export function InheritanceGraph({
       )}
       <p className="inheritance-graph-note">
         {permissionProvenance
-          ? "La ruta textual permite revisar y navegar la misma procedencia sin depender del canvas."
+          ? graph.summary.truncated
+            ? "La ruta se resume en el canvas y la lista para conservar el sujeto y el origen. Selecciona los grupos desde el rail para inspeccionar los tramos omitidos."
+            : "La ruta textual permite revisar y navegar la misma procedencia sin depender del canvas."
           : "El mapa muestra solo la línea de herencia activa para evitar duplicar el estudio. El editor, el catálogo y la lista de herencias directas permanecen disponibles como alternativa completa de teclado."}
       </p>
     </section>

@@ -1,6 +1,10 @@
 import type { LuckPermsBackup } from "../permissions";
 import { getParents } from "./inheritance";
-import type { InheritanceGraph } from "./inheritance-graph";
+import {
+  emptyInheritanceGraph,
+  type InheritanceGraph,
+  limitInheritanceGraphPath,
+} from "./inheritance-graph";
 
 /** Builds one deterministic inheritance route to an effective permission's direct source. */
 export function buildPermissionProvenanceGraph(
@@ -9,7 +13,7 @@ export function buildPermissionProvenanceGraph(
   origin: string,
 ): InheritanceGraph {
   if (!backup.groups[groupName] || !backup.groups[origin]) {
-    return { nodes: [], edges: [] };
+    return emptyInheritanceGraph();
   }
 
   const pending = [groupName];
@@ -27,7 +31,7 @@ export function buildPermissionProvenanceGraph(
     }
   }
 
-  if (!previous.has(origin)) return { nodes: [], edges: [] };
+  if (!previous.has(origin)) return emptyInheritanceGraph();
 
   const path: string[] = [];
   for (
@@ -38,7 +42,7 @@ export function buildPermissionProvenanceGraph(
     path.unshift(current);
   }
 
-  return {
+  return limitInheritanceGraphPath({
     nodes: path.map((name, depth) => ({
       id: name,
       label: name,
@@ -50,5 +54,10 @@ export function buildPermissionProvenanceGraph(
       source: path[index],
       target,
     })),
-  };
+    summary: {
+      nodeLimit: Number.POSITIVE_INFINITY,
+      omittedNodes: 0,
+      truncated: false,
+    },
+  });
 }

@@ -32,6 +32,7 @@ describe("Inheritance graph", () => {
       ["member", "missing"],
       ["default", "base"],
     ]);
+    expect(graph.summary).toMatchObject({ truncated: false, omittedNodes: 0 });
   });
 
   it("terminates existing inheritance cycles", () => {
@@ -51,5 +52,33 @@ describe("Inheritance graph", () => {
 
     expect(graph.nodes).toHaveLength(2);
     expect(graph.edges).toHaveLength(2);
+  });
+
+  it("limits large ancestor graphs without traversing every group into the canvas", () => {
+    const groups = Object.fromEntries(
+      Array.from({ length: 81 }, (_, index) => [
+        `group-${index}`,
+        {
+          nodes:
+            index === 80
+              ? []
+              : [
+                  {
+                    type: "inheritance",
+                    key: `group.group-${index + 1}`,
+                    value: true,
+                  },
+                ],
+        },
+      ]),
+    );
+    const graph = buildInheritanceGraph({ groups }, "group-0");
+
+    expect(graph.nodes).toHaveLength(80);
+    expect(graph.summary).toEqual({
+      nodeLimit: 80,
+      omittedNodes: 1,
+      truncated: true,
+    });
   });
 });
