@@ -46,6 +46,7 @@ export function PermissionTransferPanel({
           sourceGroup,
           sourceNodeIndex,
           targetGroup,
+          mode,
         );
 
   if (sourceNodeIndex === null) return null;
@@ -55,16 +56,16 @@ export function PermissionTransferPanel({
       <div className="permission-transfer-heading">
         <div>
           <p className="eyebrow">OPERACIÓN ENTRE GRUPOS</p>
-          <h3 id="transfer-title">Copiar o mover permiso</h3>
+          <h3 id="transfer-title">Decidir cambio de permiso</h3>
         </div>
         <button type="button" className="text-button" onClick={onClose}>
           Cancelar
         </button>
       </div>
       <p className="editor-intro">
-        El nodo conserva su valor, contexto y atributos al llegar al destino.
-        También puedes arrastrarlo hacia un grupo del rail para preseleccionar
-        el destino.
+        Copiar y mover conservan valor, contexto y atributos. Conceder, denegar
+        y eliminar solo afectan el mismo permiso y contexto en el destino; nunca
+        cambian el origen.
       </p>
       <div className="permission-transfer-controls">
         <label>
@@ -99,6 +100,30 @@ export function PermissionTransferPanel({
             />
             Mover
           </label>
+          <label>
+            <input
+              type="radio"
+              checked={mode === "grant"}
+              onChange={() => setMode("grant")}
+            />
+            Conceder
+          </label>
+          <label>
+            <input
+              type="radio"
+              checked={mode === "deny"}
+              onChange={() => setMode("deny")}
+            />
+            Denegar
+          </label>
+          <label>
+            <input
+              type="radio"
+              checked={mode === "remove"}
+              onChange={() => setMode("remove")}
+            />
+            Eliminar del destino
+          </label>
         </fieldset>
       </div>
       <p className="permission-transfer-preview" aria-live="polite">
@@ -106,8 +131,16 @@ export function PermissionTransferPanel({
           <>
             <ArrowRightLeft size={14} aria-hidden="true" />{" "}
             <code>{preview.node.key}</code>{" "}
-            {preview.mode === "copy" ? "se copiará de" : "se moverá de"}{" "}
-            <strong>{preview.sourceGroup}</strong> a{" "}
+            {preview.mode === "copy" && "se copiará de"}
+            {preview.mode === "move" && "se moverá de"}
+            {preview.mode === "grant" && "se concederá en"}
+            {preview.mode === "deny" && "se denegará en"}
+            {preview.mode === "remove" && "se eliminará de"}{" "}
+            {(preview.mode === "copy" || preview.mode === "move") && (
+              <>
+                <strong>{preview.sourceGroup}</strong> a{" "}
+              </>
+            )}
             <strong>{preview.targetGroup}</strong>.
           </>
         ) : error ? (
@@ -122,7 +155,15 @@ export function PermissionTransferPanel({
         disabled={!preview}
         onClick={() => preview && onTransfer(preview.targetGroup, preview.mode)}
       >
-        {mode === "copy" ? "Confirmar copia" : "Confirmar movimiento"}
+        {mode === "copy"
+          ? "Confirmar copia"
+          : mode === "move"
+            ? "Confirmar movimiento"
+            : mode === "grant"
+              ? "Confirmar concesión"
+              : mode === "deny"
+                ? "Confirmar denegación"
+                : "Confirmar eliminación"}
       </button>
     </section>
   );

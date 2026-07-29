@@ -155,8 +155,8 @@ export function PermissionGroupList({
                                 className="transfer-permission"
                                 onClick={() => onPrepareTransfer(index)}
                               >
-                                <CopyPlus size={13} aria-hidden="true" /> Copiar
-                                o mover
+                                <CopyPlus size={13} aria-hidden="true" />{" "}
+                                Cambiar en otro grupo
                               </button>
                             )}
                           </div>

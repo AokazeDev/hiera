@@ -168,6 +168,13 @@ export function Studio() {
     if (!backup || !selectedGroup) return;
     const node = backup.groups[selectedGroup]?.nodes[nodeIndex];
     if (!node || node.type !== "permission") return;
+    const operation = {
+      copy: "Copiar",
+      move: "Mover",
+      grant: "Conceder",
+      deny: "Denegar",
+      remove: "Eliminar",
+    }[mode];
     updateBackup(
       transferGroupPermission(
         backup,
@@ -176,7 +183,7 @@ export function Studio() {
         targetGroup,
         mode,
       ),
-      `${mode === "copy" ? "Copiar" : "Mover"} ${node.key} de ${selectedGroup} a ${targetGroup}`,
+      `${operation} ${node.key} ${mode === "remove" ? "de" : "en"} ${targetGroup}`,
     );
     setPendingTransfer(null);
   }

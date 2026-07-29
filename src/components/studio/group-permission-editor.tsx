@@ -58,7 +58,7 @@ export function GroupPermissionEditor({
           <p className="editor-intro">
             Los cambios solo afectan a este grupo. Los nodos con contexto se
             conservan al conceder o denegar un permiso existente. Arrastra el
-            control de puntos hacia otro grupo o usa "Copiar o mover" con
+            control de puntos hacia otro grupo o usa "Cambiar en otro grupo" con
             teclado.
           </p>
           <PermissionNodeEditor

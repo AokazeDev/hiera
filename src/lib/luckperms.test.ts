@@ -551,6 +551,131 @@ describe("Group permission transfers", () => {
       validateGroupPermissionTransfer(transferBackup, "source", 0, "source"),
     ).toBe("Elige un grupo distinto al de origen.");
   });
+
+  it("grants a contextual permission in the destination without changing the source", () => {
+    const changed = transferGroupPermission(
+      transferBackup,
+      "source",
+      0,
+      "target",
+      "grant",
+    );
+
+    expect(changed.groups.source.nodes[0]).toEqual(
+      transferBackup.groups.source.nodes[0],
+    );
+    expect(changed.groups.target.nodes.at(-1)).toEqual({
+      type: "permission",
+      key: "server.mute",
+      value: true,
+      context: { world: "nether" },
+      expiry: 123,
+    });
+  });
+
+  it("changes only the matching destination context when denying", () => {
+    const withDestinationPermission: LuckPermsBackup = {
+      ...transferBackup,
+      groups: {
+        ...transferBackup.groups,
+        target: {
+          nodes: [
+            {
+              type: "permission",
+              key: "server.mute",
+              value: true,
+              context: { world: "nether" },
+              expiry: 456,
+            },
+            {
+              type: "permission",
+              key: "server.mute",
+              value: true,
+              context: { world: "overworld" },
+            },
+          ],
+        },
+      },
+    };
+
+    const changed = transferGroupPermission(
+      withDestinationPermission,
+      "source",
+      0,
+      "target",
+      "deny",
+    );
+
+    expect(changed.groups.target.nodes).toEqual([
+      {
+        type: "permission",
+        key: "server.mute",
+        value: false,
+        context: { world: "nether" },
+        expiry: 456,
+      },
+      {
+        type: "permission",
+        key: "server.mute",
+        value: true,
+        context: { world: "overworld" },
+      },
+    ]);
+  });
+
+  it("removes only the matching destination permission and requires it to exist", () => {
+    const withDestinationPermission: LuckPermsBackup = {
+      ...transferBackup,
+      groups: {
+        ...transferBackup.groups,
+        target: {
+          nodes: [
+            {
+              type: "permission",
+              key: "server.mute",
+              value: true,
+              context: { world: "nether" },
+            },
+            {
+              type: "permission",
+              key: "server.mute",
+              value: true,
+              context: { world: "overworld" },
+            },
+          ],
+        },
+      },
+    };
+
+    const changed = transferGroupPermission(
+      withDestinationPermission,
+      "source",
+      0,
+      "target",
+      "remove",
+    );
+
+    expect(changed.groups.source.nodes).toEqual(
+      transferBackup.groups.source.nodes,
+    );
+    expect(changed.groups.target.nodes).toEqual([
+      {
+        type: "permission",
+        key: "server.mute",
+        value: true,
+        context: { world: "overworld" },
+      },
+    ]);
+    expect(
+      validateGroupPermissionTransfer(
+        transferBackup,
+        "source",
+        0,
+        "target",
+        "remove",
+      ),
+    ).toBe("El grupo de destino no tiene este permiso en el mismo contexto.");
+  });
 });
 
 describe("Permission batch application", () => {
