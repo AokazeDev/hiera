@@ -19,6 +19,16 @@ const audienceLabels: Record<PermissionAudience, string> = {
   sensitive: "Revisar",
 };
 
+const audienceFilters = [
+  "all",
+  "admin",
+  "player",
+  "group",
+  "sensitive",
+] as const;
+
+type AudienceFilter = (typeof audienceFilters)[number];
+
 type CatalogPanelProps = {
   backup: LuckPermsBackup | null;
   catalogs: PermissionCatalog[];
@@ -39,7 +49,7 @@ export function CatalogPanel({
   const [selectedCatalog, setSelectedCatalog] =
     useState<PermissionCatalog | null>(null);
   const [query, setQuery] = useState("");
-  const [audience, setAudience] = useState<"all" | "admin" | "player">("all");
+  const [audience, setAudience] = useState<AudienceFilter>("all");
   const [sortBy, setSortBy] = useState<"node" | "category">("node");
   const dialog = useRef<HTMLDialogElement>(null);
   const targetGroups = backup ? Object.keys(backup.groups) : [];
@@ -125,18 +135,27 @@ export function CatalogPanel({
           >
             <span>PLUGIN / {catalog.slug}</span>
             <strong>{catalog.name}</strong>
-            <small>{catalog.permissions.length} permisos documentados</small>
-            <i>Ver catálogo</i>
+            <small>
+              {catalog.permissions.length} permisos · v{catalog.version}
+            </small>
+            <i>
+              <span>FUENTE VERIFICADA</span> Abrir catálogo →
+            </i>
           </button>
         ))}
       </div>
-      <dialog ref={dialog} className="catalog-browser-dialog" onClose={close}>
+      <dialog
+        ref={dialog}
+        className="catalog-browser-dialog"
+        aria-labelledby="catalog-dialog-title"
+        onClose={close}
+      >
         {selectedCatalog && (
           <article>
             <header>
               <div>
                 <p className="eyebrow">CATÁLOGO / PLUGIN</p>
-                <h2>{selectedCatalog.name}</h2>
+                <h2 id="catalog-dialog-title">{selectedCatalog.name}</h2>
               </div>
               <button
                 type="button"
@@ -176,7 +195,7 @@ export function CatalogPanel({
               </a>
             </div>
             <div className="catalog-browser-controls">
-              <label>
+              <label className="catalog-search-surface">
                 <Search size={15} aria-hidden="true" />
                 <span className="sr-only">Buscar permiso</span>
                 <input
@@ -187,7 +206,7 @@ export function CatalogPanel({
               </label>
               <fieldset className="catalog-audience">
                 <legend className="sr-only">Recomendación</legend>
-                {(["all", "admin", "player"] as const).map((value) => (
+                {audienceFilters.map((value) => (
                   <button
                     key={value}
                     type="button"
@@ -300,7 +319,8 @@ export function CatalogPanel({
               </section>
             )}
             <p className="catalog-browser-count" aria-live="polite">
-              {permissions.length} permisos visibles.
+              {permissions.length} permisos visibles
+              {audience !== "all" ? ` · ${audienceLabels[audience]}` : ""}.
             </p>
             <div className="catalog-permission-table">
               {permissions.map((permission) => (

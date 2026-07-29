@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowUpRight, ExternalLink, X } from "lucide-react";
+import { ArrowUpRight, ExternalLink, FileJson, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { ActionButton } from "@/components/ui/action-button";
 import type { PermissionCatalog } from "@/lib/permissions";
 
 type CatalogDirectoryProps = { catalogs: PermissionCatalog[] };
@@ -25,33 +26,45 @@ export function CatalogDirectory({ catalogs }: CatalogDirectoryProps) {
       <div className="catalog-directory-grid">
         {catalogs.map((catalog, index) => (
           <article className="catalog-directory-card" key={catalog.slug}>
-            <div className="catalog-card-index">
-              REG / {String(index + 1).padStart(2, "0")}
+            <div className="catalog-card-topline">
+              <span className="catalog-card-logo" aria-hidden="true">
+                <FileJson size={16} />
+              </span>
+              <div className="catalog-card-identity">
+                <span className="catalog-card-index">
+                  REG / {String(index + 1).padStart(2, "0")}
+                </span>
+                <h2>{catalog.name}</h2>
+              </div>
+              <span className="catalog-card-status">Fuente verificada</span>
             </div>
-            <h2>{catalog.name}</h2>
-            <p>{catalog.description}</p>
-            <dl className="catalog-card-meta">
-              <div>
-                <dt>Nodos</dt>
-                <dd>{catalog.permissions.length}</dd>
-              </div>
-              <div>
-                <dt>Versión</dt>
-                <dd>{catalog.version}</dd>
-              </div>
-              <div>
-                <dt>Actualizado</dt>
-                <dd>{catalog.updatedAt}</dd>
-              </div>
-            </dl>
-            <button
-              type="button"
+            <div className="catalog-card-body">
+              <p>{catalog.description}</p>
+            </div>
+            <div className="catalog-card-footer">
+              <dl className="catalog-card-meta">
+                <div>
+                  <dt>Nodos</dt>
+                  <dd>{catalog.permissions.length}</dd>
+                </div>
+                <div>
+                  <dt>Versión</dt>
+                  <dd>{catalog.version}</dd>
+                </div>
+                <div>
+                  <dt>Actualizado</dt>
+                  <dd>{catalog.updatedAt}</dd>
+                </div>
+              </dl>
+            </div>
+            <ActionButton
+              variant="quiet"
               className="catalog-card-action"
               onClick={() => setSelected(catalog)}
               aria-haspopup="dialog"
             >
               Consultar ficha <ArrowUpRight size={15} aria-hidden="true" />
-            </button>
+            </ActionButton>
           </article>
         ))}
         <article

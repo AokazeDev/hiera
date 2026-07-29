@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import { LandingMotion } from "@/components/landing-motion";
+import { PublicFooter } from "@/components/public-footer";
 
 const steps = [
   ["01", "Exporta", "/lp export hiera-backup.json"],
@@ -16,6 +17,25 @@ const steps = [
   ["03", "Revisa", "Comprueba herencias, contexto y procedencia."],
   ["04", "Importa", "/lp import hiera-backup.json --replace"],
 ];
+
+const questions = [
+  [
+    "¿El backup sale de mi navegador?",
+    "No. Hiera interpreta el JSON dentro de tu navegador y solo descarga un archivo nuevo cuando tú lo confirmas.",
+  ],
+  [
+    "¿Puede aplicar cambios directamente al servidor?",
+    "No. El estudio prepara un backup JSON compatible para que revises e importes explícitamente con LuckPerms.",
+  ],
+  [
+    "¿Los catálogos sustituyen la documentación del plugin?",
+    "No. Son referencias con versión, fuente y fecha de consulta. Confirma siempre la versión y cualquier fork de tu servidor.",
+  ],
+  [
+    "¿Qué ocurre con permisos sensibles o comodines?",
+    "Hiera los conserva como nodos del backup y señala que requieren revisión manual antes de llevarlos a producción.",
+  ],
+] as const;
 
 export default function Home() {
   const structuredData = {
@@ -331,6 +351,24 @@ export default function Home() {
           </Link>
         </section>
 
+        <section className="landing-faq" aria-labelledby="faq-title">
+          <div className="landing-faq-intro">
+            <h2 id="faq-title">Respuestas antes de tocar producción.</h2>
+            <p>Lo local y explícito también debe ser fácil de comprobar.</p>
+          </div>
+          <div className="landing-faq-list">
+            {questions.map(([question, answer], index) => (
+              <details key={question} open={index === 0}>
+                <summary>
+                  {question}
+                  <span aria-hidden="true">+</span>
+                </summary>
+                <p>{answer}</p>
+              </details>
+            ))}
+          </div>
+        </section>
+
         <section className="closing" data-reveal-section>
           <p className="eyebrow">FUENTES Y ARCHIVOS, SIN CAJAS NEGRAS</p>
           <h2>
@@ -349,6 +387,7 @@ export default function Home() {
             Ver índice de catálogos <ArrowUpRight size={17} />
           </Link>
         </section>
+        <PublicFooter />
       </LandingMotion>
     </ViewTransition>
   );

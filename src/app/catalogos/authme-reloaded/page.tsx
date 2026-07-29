@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicFooter } from "@/components/public-footer";
 import {
   authMeReloaded,
   type PermissionAudience,
@@ -60,7 +61,7 @@ const permissionsByCategory = authMeReloaded.permissions.reduce<
 
 export default function AuthMeCatalogPage() {
   return (
-    <main className="document-page">
+    <main className="document-page public-shell">
       <nav className="site-nav" aria-label="Navegación principal">
         <Link className="wordmark" href="/">
           HIERA<span>.</span>
@@ -139,6 +140,7 @@ export default function AuthMeCatalogPage() {
           Abrir el estudio local
         </Link>
       </article>
+      <PublicFooter />
     </main>
   );
 }

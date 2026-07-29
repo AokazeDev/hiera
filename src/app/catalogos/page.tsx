@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CatalogDirectory } from "@/components/catalog-directory";
+import { PublicFooter } from "@/components/public-footer";
 import { catalogs } from "@/lib/permissions";
 
 export const metadata: Metadata = {
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
 
 export default function CatalogsPage() {
   return (
-    <main className="catalog-directory-page">
+    <main className="catalog-directory-page public-shell">
       <nav className="site-nav" aria-label="Navegación principal">
         <Link className="wordmark" href="/">
           HIERA<span>.</span>
@@ -67,6 +68,7 @@ export default function CatalogsPage() {
         </div>
         <CatalogDirectory catalogs={catalogs} />
       </section>
+      <PublicFooter />
     </main>
   );
 }

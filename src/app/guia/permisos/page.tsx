@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PublicFooter } from "@/components/public-footer";
 
 export const metadata: Metadata = {
   title: "Guía de permisos de LuckPerms",
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function PermissionGuidePage() {
   return (
-    <main className="document-page">
+    <main className="document-page public-shell">
       <nav className="site-nav" aria-label="Navegación principal">
         <Link className="wordmark" href="/">
           HIERA<span>.</span>
@@ -98,6 +99,7 @@ export default function PermissionGuidePage() {
           </ol>
         </section>
       </article>
+      <PublicFooter />
     </main>
   );
 }

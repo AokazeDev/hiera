@@ -509,6 +509,7 @@ export function Studio() {
                 onRemoveUserPermission={removeUserPermission}
                 onSetUserPermissionContext={setUserPermissionContext}
                 onPrepareTransfer={preparePermissionTransfer}
+                onRequestImport={() => input.current?.click()}
               />
               {backup && pendingTransfer && (
                 <PermissionTransferPanel

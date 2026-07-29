@@ -49,8 +49,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#e8e5dd",
-  colorScheme: "light",
+  themeColor: "#08090b",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -58,7 +58,17 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable}`}>
-      <body>{children}</body>
+      <body>
+        {/*
+          THESIS: Hiera es una consola de inspeccion, no una pagina de marketing generica.
+          OWN-WORLD: Campo nocturno de infraestructura, reglas finas y verde lima para la accion verificable.
+          STORY: El administrador comprende, revisa y exporta un backup local con confianza.
+          FIRST VIEWPORT: Un titular centrado precede un mapa de herencias y una accion directa al estudio.
+          FORM: Consola de operaciones, direccion fijada por la referencia del usuario; seed 2d62aefe.
+          FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+        */}
+        {children}
+      </body>
     </html>
   );
 }

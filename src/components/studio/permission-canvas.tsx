@@ -7,6 +7,7 @@ import {
   Handle,
   type Node,
   type NodeProps,
+  Panel,
   Position,
   ReactFlow,
 } from "@xyflow/react";
@@ -15,6 +16,7 @@ import {
   ChevronDown,
   CirclePlus,
   Copy,
+  FileUp,
   MoreHorizontal,
   Search,
   ShieldMinus,
@@ -478,6 +480,7 @@ type PermissionCanvasProps = {
     context: Record<string, string | string[]>,
   ) => void;
   onPrepareTransfer: (groupName: string, nodeIndex: number) => void;
+  onRequestImport: () => void;
 };
 
 export function PermissionCanvas({
@@ -503,6 +506,7 @@ export function PermissionCanvas({
   onRemoveUserPermission,
   onSetUserPermissionContext,
   onPrepareTransfer,
+  onRequestImport,
 }: PermissionCanvasProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [dialog, setDialog] = useState<GraphDialog | null>(null);
@@ -607,6 +611,13 @@ export function PermissionCanvas({
           Los grupos, permisos directos y herencias aparecerán aquí sin subir el
           archivo.
         </p>
+        <button
+          type="button"
+          className="primary-action"
+          onClick={onRequestImport}
+        >
+          Importar backup <FileUp size={16} aria-hidden="true" />
+        </button>
       </section>
     );
   }
@@ -825,8 +836,41 @@ export function PermissionCanvas({
             }
           }}
         >
-          <Background gap={22} size={1} color="#c6c7bb" />
-          <Controls showInteractive={false} />
+          <Background gap={22} size={1} color="var(--line-strong)" />
+          <Controls position="bottom-right" showInteractive={false} />
+          <Panel className="canvas-legend" position="top-right">
+            <div className="canvas-legend-heading">
+              <span>MAPA ACTIVO</span>
+              <button type="button" onClick={() => setPositions({})}>
+                Restablecer
+              </button>
+            </div>
+            <dl>
+              <div>
+                <dt>
+                  <i className="canvas-legend-mark is-group" /> Grupo
+                </dt>
+                <dd>{groupNames.length}</dd>
+              </div>
+              <div>
+                <dt>
+                  <i className="canvas-legend-mark is-user" /> Usuario
+                </dt>
+                <dd>{userNodes.length}</dd>
+              </div>
+              <div>
+                <dt>
+                  <i className="canvas-legend-line" /> Herencia
+                </dt>
+                <dd>
+                  {
+                    edges.filter((edge) => edge.id.startsWith("inheritance:"))
+                      .length
+                  }
+                </dd>
+              </div>
+            </dl>
+          </Panel>
         </ReactFlow>
       </div>
       <dialog
