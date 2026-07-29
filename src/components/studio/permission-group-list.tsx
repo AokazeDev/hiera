@@ -88,7 +88,12 @@ export function PermissionGroupList({
           const groupId = `permission-group-${encodeURIComponent(group.id)}`;
 
           return (
-            <section className="permission-group" key={group.id}>
+            <section
+              className="permission-group"
+              data-permission-flip-item
+              data-flip-id={`permission-group-${group.id}`}
+              key={group.id}
+            >
               <button
                 type="button"
                 className="permission-group-toggle"
@@ -109,7 +114,11 @@ export function PermissionGroupList({
                   {group.items.map(({ node, index }) => {
                     const context = contextLabel(node);
                     return (
-                      <li key={`${index}-${node.key}`}>
+                      <li
+                        data-permission-flip-item
+                        data-flip-id={`direct-permission-${index}`}
+                        key={`${index}-${node.key}`}
+                      >
                         <article className="direct-permission">
                           <div>
                             {onStartDrag && (

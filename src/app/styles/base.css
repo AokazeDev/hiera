@@ -42,6 +42,76 @@ button {
   outline-offset: 3px;
 }
 
+::view-transition-group(.hiera-forward),
+::view-transition-group(.hiera-back),
+::view-transition-group(.workspace-swap) {
+  animation-duration: 240ms;
+}
+
+::view-transition-old(.hiera-forward),
+::view-transition-old(.hiera-back),
+::view-transition-old(.workspace-swap) {
+  animation: 140ms ease-in both hiera-fade-out;
+}
+
+::view-transition-new(.hiera-forward),
+::view-transition-new(.hiera-back),
+::view-transition-new(.workspace-swap) {
+  animation: 220ms ease-out both hiera-fade-in;
+}
+
+::view-transition-old(.hiera-forward) {
+  animation-name: hiera-fade-out, hiera-forward-out;
+}
+
+::view-transition-new(.hiera-forward) {
+  animation-name: hiera-fade-in, hiera-forward-in;
+}
+
+::view-transition-old(.hiera-back) {
+  animation-name: hiera-fade-out, hiera-back-out;
+}
+
+::view-transition-new(.hiera-back) {
+  animation-name: hiera-fade-in, hiera-back-in;
+}
+
+@keyframes hiera-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes hiera-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes hiera-forward-out {
+  to {
+    translate: -8px;
+  }
+}
+
+@keyframes hiera-forward-in {
+  from {
+    translate: 8px;
+  }
+}
+
+@keyframes hiera-back-out {
+  to {
+    translate: 8px;
+  }
+}
+
+@keyframes hiera-back-in {
+  from {
+    translate: -8px;
+  }
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

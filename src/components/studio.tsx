@@ -10,7 +10,13 @@ import {
   Network,
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import {
+  startTransition,
+  useEffect,
+  useRef,
+  useState,
+  ViewTransition,
+} from "react";
 import { BackupRail } from "@/components/studio/backup-rail";
 import { CatalogPanel } from "@/components/studio/catalog-panel";
 import { EffectivePermissionBrowser } from "@/components/studio/effective-permission-browser";
@@ -269,7 +275,7 @@ export function Studio() {
   ) {
     setSelectedGroup(sourceGroup);
     setSelectedUser(null);
-    setWorkspace("editor");
+    selectWorkspace("editor");
     preparePermissionTransfer(nodeIndex, sourceGroup);
   }
 
@@ -284,7 +290,7 @@ export function Studio() {
     setPendingTransfer({ ...draggedPermission, targetGroup });
     setSelectedGroup(draggedPermission.sourceGroup);
     setSelectedUser(null);
-    setWorkspace("editor");
+    selectWorkspace("editor");
     setDraggedPermission(null);
   }
 
@@ -299,7 +305,7 @@ export function Studio() {
       permissionKey: draggedCatalogPermission,
       targetGroup,
     });
-    setWorkspace("catalog");
+    selectWorkspace("catalog");
     setDraggedCatalogPermission(null);
   }
 
@@ -464,7 +470,19 @@ export function Studio() {
   function inspectPermissionOrigin(provenance: PermissionProvenance) {
     if (!selectedGroup && !selectedUser) return;
     setPermissionProvenance(provenance);
-    setWorkspace("inheritance");
+    selectWorkspace("inheritance");
+  }
+
+  function selectWorkspace(
+    nextWorkspace:
+      | "editor"
+      | "catalog"
+      | "comparison"
+      | "effective"
+      | "inheritance",
+  ) {
+    if (nextWorkspace === workspace) return;
+    startTransition(() => setWorkspace(nextWorkspace));
   }
 
   function selectGroup(groupName: string) {
@@ -488,7 +506,7 @@ export function Studio() {
   return (
     <main ref={root} className="studio-shell">
       <header className="studio-header">
-        <Link href="/" className="wordmark">
+        <Link href="/" className="wordmark" transitionTypes={["hiera-back"]}>
           HIERA<span>.</span>
         </Link>
         <p>Estudio local de permisos</p>
@@ -505,7 +523,7 @@ export function Studio() {
               type="button"
               className={workspace === "editor" ? "is-active" : ""}
               aria-pressed={workspace === "editor"}
-              onClick={() => setWorkspace("editor")}
+              onClick={() => selectWorkspace("editor")}
             >
               <FilePenLine size={15} /> Editor
             </button>
@@ -513,7 +531,7 @@ export function Studio() {
               type="button"
               className={workspace === "catalog" ? "is-active" : ""}
               aria-pressed={workspace === "catalog"}
-              onClick={() => setWorkspace("catalog")}
+              onClick={() => selectWorkspace("catalog")}
             >
               <BookOpen size={15} /> Catálogo
             </button>
@@ -521,7 +539,7 @@ export function Studio() {
               type="button"
               className={workspace === "comparison" ? "is-active" : ""}
               aria-pressed={workspace === "comparison"}
-              onClick={() => setWorkspace("comparison")}
+              onClick={() => selectWorkspace("comparison")}
             >
               <GitCompareArrows size={15} /> Comparar
             </button>
@@ -529,7 +547,7 @@ export function Studio() {
               type="button"
               className={workspace === "effective" ? "is-active" : ""}
               aria-pressed={workspace === "effective"}
-              onClick={() => setWorkspace("effective")}
+              onClick={() => selectWorkspace("effective")}
             >
               <ListFilter size={15} /> Resolver
             </button>
@@ -537,7 +555,7 @@ export function Studio() {
               type="button"
               className={workspace === "inheritance" ? "is-active" : ""}
               aria-pressed={workspace === "inheritance"}
-              onClick={() => setWorkspace("inheritance")}
+              onClick={() => selectWorkspace("inheritance")}
             >
               <Network size={15} /> Herencias
             </button>
@@ -605,81 +623,83 @@ export function Studio() {
           }
           onEndGroupDrag={() => setDraggedPermission(null)}
         />
-        {workspace === "comparison" ? (
-          <GroupComparison backup={backup} initialGroup={selectedGroup} />
-        ) : workspace === "effective" ? (
-          <EffectivePermissionBrowser
-            backup={backup}
-            groupName={selectedGroup}
-            userId={selectedUser}
-            activeContext={activeContext}
-            catalog={catalog}
-            onInspectPermissionOrigin={inspectPermissionOrigin}
-            onPreparePermissionTransfer={prepareGroupPermissionTransfer}
-            onStartPermissionDrag={(sourceGroup, nodeIndex) =>
-              startPermissionDrag(nodeIndex, sourceGroup)
-            }
-            onEndPermissionDrag={() => setDraggedPermission(null)}
-          />
-        ) : workspace === "inheritance" ? (
-          <InheritanceGraph
-            backup={backup}
-            groupName={selectedGroup}
-            userId={selectedUser}
-            activeContext={activeContext}
-            onSelectGroup={selectGroup}
-            draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
-            draggingCatalogPermission={Boolean(draggedCatalogPermission)}
-            onDropPermission={dropPermissionOnGroup}
-            onDropCatalogPermission={dropCatalogPermissionOnGroup}
-            permissionProvenance={permissionProvenance}
-          />
-        ) : workspace === "editor" && selectedUser ? (
-          <UserMembershipEditor
-            backup={backup}
-            userId={selectedUser}
-            onAddMembership={addMembership}
-            onRemoveMembership={removeMembership}
-            onSetPrimaryGroup={changePrimaryGroup}
-            onAddPermission={addUserPermission}
-            onSetPermissionValue={setUserPermissionValue}
-            onSetPermissionContext={setUserPermissionContext}
-            onRemovePermission={removeUserPermission}
-            catalog={catalog}
-          />
-        ) : workspace === "editor" ? (
-          <GroupPermissionEditor
-            backup={backup}
-            groupName={selectedGroup}
-            onAdd={addPermission}
-            onSetValue={setPermissionValue}
-            onSetContext={setPermissionContext}
-            onRemove={removePermission}
-            onTransfer={transferPermission}
-            transferRequest={
-              pendingTransfer?.sourceGroup === selectedGroup
-                ? pendingTransfer
-                : null
-            }
-            onPrepareTransfer={preparePermissionTransfer}
-            onStartDrag={startPermissionDrag}
-            onEndDrag={() => setDraggedPermission(null)}
-            onCloseTransfer={() => setPendingTransfer(null)}
-            catalog={catalog}
-          />
-        ) : (
-          <CatalogPanel
-            backup={backup}
-            catalog={authMeReloaded}
-            groupName={selectedGroup}
-            onApply={applyPermissions}
-            dragRequest={pendingCatalogPermission}
-            onStartPermissionDrag={startCatalogPermissionDrag}
-            onEndPermissionDrag={() => setDraggedCatalogPermission(null)}
-            onApplyDroppedPermission={applyDroppedCatalogPermission}
-            onCloseDragRequest={() => setPendingCatalogPermission(null)}
-          />
-        )}
+        <ViewTransition update="workspace-swap" default="none">
+          {workspace === "comparison" ? (
+            <GroupComparison backup={backup} initialGroup={selectedGroup} />
+          ) : workspace === "effective" ? (
+            <EffectivePermissionBrowser
+              backup={backup}
+              groupName={selectedGroup}
+              userId={selectedUser}
+              activeContext={activeContext}
+              catalog={catalog}
+              onInspectPermissionOrigin={inspectPermissionOrigin}
+              onPreparePermissionTransfer={prepareGroupPermissionTransfer}
+              onStartPermissionDrag={(sourceGroup, nodeIndex) =>
+                startPermissionDrag(nodeIndex, sourceGroup)
+              }
+              onEndPermissionDrag={() => setDraggedPermission(null)}
+            />
+          ) : workspace === "inheritance" ? (
+            <InheritanceGraph
+              backup={backup}
+              groupName={selectedGroup}
+              userId={selectedUser}
+              activeContext={activeContext}
+              onSelectGroup={selectGroup}
+              draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
+              draggingCatalogPermission={Boolean(draggedCatalogPermission)}
+              onDropPermission={dropPermissionOnGroup}
+              onDropCatalogPermission={dropCatalogPermissionOnGroup}
+              permissionProvenance={permissionProvenance}
+            />
+          ) : workspace === "editor" && selectedUser ? (
+            <UserMembershipEditor
+              backup={backup}
+              userId={selectedUser}
+              onAddMembership={addMembership}
+              onRemoveMembership={removeMembership}
+              onSetPrimaryGroup={changePrimaryGroup}
+              onAddPermission={addUserPermission}
+              onSetPermissionValue={setUserPermissionValue}
+              onSetPermissionContext={setUserPermissionContext}
+              onRemovePermission={removeUserPermission}
+              catalog={catalog}
+            />
+          ) : workspace === "editor" ? (
+            <GroupPermissionEditor
+              backup={backup}
+              groupName={selectedGroup}
+              onAdd={addPermission}
+              onSetValue={setPermissionValue}
+              onSetContext={setPermissionContext}
+              onRemove={removePermission}
+              onTransfer={transferPermission}
+              transferRequest={
+                pendingTransfer?.sourceGroup === selectedGroup
+                  ? pendingTransfer
+                  : null
+              }
+              onPrepareTransfer={preparePermissionTransfer}
+              onStartDrag={startPermissionDrag}
+              onEndDrag={() => setDraggedPermission(null)}
+              onCloseTransfer={() => setPendingTransfer(null)}
+              catalog={catalog}
+            />
+          ) : (
+            <CatalogPanel
+              backup={backup}
+              catalog={authMeReloaded}
+              groupName={selectedGroup}
+              onApply={applyPermissions}
+              dragRequest={pendingCatalogPermission}
+              onStartPermissionDrag={startCatalogPermissionDrag}
+              onEndPermissionDrag={() => setDraggedCatalogPermission(null)}
+              onApplyDroppedPermission={applyDroppedCatalogPermission}
+              onCloseDragRequest={() => setPendingCatalogPermission(null)}
+            />
+          )}
+        </ViewTransition>
         <ResolutionPanel
           backup={backup}
           groupName={selectedGroup}

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { PermissionFilterBar } from "@/components/studio/permission-filter-bar";
 import { PermissionGroupingControl } from "@/components/studio/permission-grouping-control";
 import { PermissionSortingControl } from "@/components/studio/permission-sorting-control";
+import { usePermissionGroupingFlip } from "@/components/studio/use-permission-grouping-flip";
 import type { ResolvedPermission } from "@/lib/luckperms";
 import {
   defaultPermissionFilter,
@@ -62,6 +63,8 @@ export function EffectivePermissionBrowser({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     () => new Set(),
   );
+  const { root: groupingRoot, prepareGroupingTransition } =
+    usePermissionGroupingFlip();
   const user = backup && userId ? backup.users?.[userId] : null;
   const subject = groupName ?? user?.username ?? userId;
   const effective =
@@ -91,13 +94,46 @@ export function EffectivePermissionBrowser({
     });
   }
 
+  function changeGrouping(nextGrouping: PermissionGrouping) {
+    if (nextGrouping === grouping) return;
+    prepareGroupingTransition();
+    setExpandedGroups((current) => {
+      const expandedPermissions = new Set(
+        groups
+          .filter((group) => current.has(group.id))
+          .flatMap((group) =>
+            group.items.map(
+              (permission) =>
+                `${permission.origin}-${permission.originNodeIndex}-${permission.key}`,
+            ),
+          ),
+      );
+      return new Set(
+        groupPermissions(
+          permissions,
+          (permission) => permission.key,
+          nextGrouping,
+        )
+          .filter((group) =>
+            group.items.some((permission) =>
+              expandedPermissions.has(
+                `${permission.origin}-${permission.originNodeIndex}-${permission.key}`,
+              ),
+            ),
+          )
+          .map((group) => group.id),
+      );
+    });
+    setGrouping(nextGrouping);
+  }
+
   return (
     <section
       className="workspace effective-permission-browser"
       aria-labelledby="effective-permissions-title"
     >
       {backup && subject ? (
-        <>
+        <div ref={groupingRoot}>
           <div className="workspace-title">
             <div>
               <p className="eyebrow">
@@ -122,7 +158,7 @@ export function EffectivePermissionBrowser({
           <div className="effective-permission-controls">
             <PermissionGroupingControl
               value={grouping}
-              onChange={setGrouping}
+              onChange={changeGrouping}
             />
             <PermissionSortingControl
               value={sort}
@@ -136,7 +172,12 @@ export function EffectivePermissionBrowser({
                 const expanded = expandedGroups.has(group.id);
                 const groupId = `effective-permission-group-${encodeURIComponent(group.id)}`;
                 return (
-                  <section className="permission-group" key={group.id}>
+                  <section
+                    className="permission-group"
+                    data-permission-flip-item
+                    data-flip-id={`effective-permission-group-${group.id}`}
+                    key={group.id}
+                  >
                     <button
                       type="button"
                       className="permission-group-toggle"
@@ -163,6 +204,8 @@ export function EffectivePermissionBrowser({
                           const context = contextLabel(node);
                           return (
                             <li
+                              data-permission-flip-item
+                              data-flip-id={`effective-permission-${node.origin}-${node.originNodeIndex}-${node.key}`}
                               key={`${node.origin}-${node.originNodeIndex}-${node.key}`}
                             >
                               <span
@@ -250,7 +293,7 @@ export function EffectivePermissionBrowser({
               Ningún permiso efectivo coincide con los filtros activos.
             </p>
           )}
-        </>
+        </div>
       ) : (
         <div className="resolution-empty">
           <p>

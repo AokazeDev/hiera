@@ -5,6 +5,7 @@ import { PermissionFilterBar } from "@/components/studio/permission-filter-bar";
 import { PermissionGroupList } from "@/components/studio/permission-group-list";
 import { PermissionGroupingControl } from "@/components/studio/permission-grouping-control";
 import { PermissionSortingControl } from "@/components/studio/permission-sorting-control";
+import { usePermissionGroupingFlip } from "@/components/studio/use-permission-grouping-flip";
 import {
   defaultPermissionFilter,
   filterPermissionNodes,
@@ -51,6 +52,8 @@ export function PermissionNodeEditor({
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     () => new Set(),
   );
+  const { root: groupingRoot, prepareGroupingTransition } =
+    usePermissionGroupingFlip();
   const permissions = sortPermissions(
     filterPermissionNodes(nodes, filters),
     sort,
@@ -80,8 +83,32 @@ export function PermissionNodeEditor({
     });
   }
 
+  function changeGrouping(nextGrouping: "flat" | "plugin" | "segment") {
+    if (nextGrouping === grouping) return;
+    prepareGroupingTransition();
+    setExpandedGroups((current) => {
+      const expandedIndexes = new Set(
+        permissionGroups
+          .filter((group) => current.has(group.id))
+          .flatMap((group) => group.items.map((item) => item.index)),
+      );
+      return new Set(
+        groupPermissions(
+          permissions,
+          (permission) => permission.node.key,
+          nextGrouping,
+        )
+          .filter((group) =>
+            group.items.some((item) => expandedIndexes.has(item.index)),
+          )
+          .map((group) => group.id),
+      );
+    });
+    setGrouping(nextGrouping);
+  }
+
   return (
-    <>
+    <div ref={groupingRoot}>
       <form className="permission-form" onSubmit={submit}>
         <label>
           <span>Permiso personalizado</span>
@@ -121,7 +148,7 @@ export function PermissionNodeEditor({
         filters={filters}
         onChange={setFilters}
       />
-      <PermissionGroupingControl value={grouping} onChange={setGrouping} />
+      <PermissionGroupingControl value={grouping} onChange={changeGrouping} />
       <PermissionSortingControl value={sort} onChange={setSort} />
       {permissions.length ? (
         <PermissionGroupList
@@ -150,6 +177,6 @@ export function PermissionNodeEditor({
           </p>
         </section>
       )}
-    </>
+    </div>
   );
 }

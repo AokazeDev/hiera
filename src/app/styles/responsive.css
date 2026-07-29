@@ -231,4 +231,19 @@
     animation-iteration-count: 1;
     transition-duration: 0.01ms;
   }
+  ::view-transition-old(.hiera-forward),
+  ::view-transition-old(.hiera-back),
+  ::view-transition-old(.workspace-swap),
+  ::view-transition-new(.hiera-forward),
+  ::view-transition-new(.hiera-back),
+  ::view-transition-new(.workspace-swap) {
+    animation-duration: 150ms;
+    animation-name: hiera-fade-out;
+    translate: 0;
+  }
+  ::view-transition-new(.hiera-forward),
+  ::view-transition-new(.hiera-back),
+  ::view-transition-new(.workspace-swap) {
+    animation-name: hiera-fade-in;
+  }
 }
