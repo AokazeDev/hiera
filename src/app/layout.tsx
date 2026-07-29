@@ -10,32 +10,40 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://hiera.symera.cloud"),
-  title: { default: "Hiera | LuckPerms, made legible", template: "%s | Hiera" },
+  title: {
+    default: "Hiera | Editor local de LuckPerms",
+    template: "%s | Hiera",
+  },
   description:
-    "Estudio local-first para inspeccionar backups de LuckPerms, entender herencias y construir plantillas de permisos trazables.",
+    "Editor gratuito, local y sin cuenta para inspeccionar backups de LuckPerms, entender herencias y consultar catálogos de permisos con fuente.",
   alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     url: "/",
     siteName: "Hiera",
-    title: "Hiera | LuckPerms, made legible",
+    title: "Hiera | Editor local de LuckPerms",
     description:
-      "Entiende permisos, grupos y herencias de LuckPerms sin entregar tus datos.",
+      "Editor gratuito y sin cuenta para entender permisos, grupos y herencias de LuckPerms sin subir tu backup.",
     images: [
       {
-        url: "/hiera-og.png",
+        url: "/og-home.png",
         width: 1200,
-        height: 640,
-        alt: "Hiera: permisos de LuckPerms legibles y locales",
+        height: 630,
+        alt: "Hiera: editor local de LuckPerms gratis, local y sin cuenta",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Hiera | LuckPerms, made legible",
+    title: "Hiera | Editor local de LuckPerms",
     description:
-      "Entiende permisos, grupos y herencias de LuckPerms sin entregar tus datos.",
-    images: ["/hiera-og.png"],
+      "Editor gratuito y sin cuenta para entender permisos, grupos y herencias de LuckPerms sin subir tu backup.",
+    images: [
+      {
+        url: "/og-home.png",
+        alt: "Hiera: editor local de LuckPerms gratis, local y sin cuenta",
+      },
+    ],
   },
   robots: { index: true, follow: true },
 };

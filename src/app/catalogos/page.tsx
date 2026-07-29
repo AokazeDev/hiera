@@ -6,8 +6,34 @@ import { catalogs } from "@/lib/permissions";
 export const metadata: Metadata = {
   title: "Catálogos de permisos",
   description:
-    "Fuentes documentales verificables para acelerar el trabajo en Hiera, sin sustituir el editor general.",
+    "Biblioteca de fuentes documentales para permisos de plugins: versión, fecha, origen y nodos consultables.",
   alternates: { canonical: "/catalogos" },
+  openGraph: {
+    url: "/catalogos",
+    title: "Catálogos de permisos | Hiera",
+    description:
+      "Biblioteca de fuentes documentales para permisos de plugins: versión, fecha, origen y nodos consultables.",
+    images: [
+      {
+        url: "/og-catalogos.png",
+        width: 1200,
+        height: 630,
+        alt: "Catálogos de permisos con fuentes verificables para plugins",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Catálogos de permisos | Hiera",
+    description:
+      "Biblioteca de fuentes documentales para permisos de plugins: versión, fecha, origen y nodos consultables.",
+    images: [
+      {
+        url: "/og-catalogos.png",
+        alt: "Catálogos de permisos con fuentes verificables para plugins",
+      },
+    ],
+  },
 };
 
 export default function CatalogsPage() {
@@ -22,11 +48,12 @@ export default function CatalogsPage() {
         </Link>
       </nav>
       <section className="catalog-directory-intro" data-reveal-section>
-        <p className="eyebrow">ÍNDICE DE FUENTES</p>
-        <h1>Atajos documentales, no cajas negras.</h1>
+        <p className="eyebrow">BIBLIOTECA DOCUMENTAL / REGISTRO PÚBLICO</p>
+        <h1>Catálogos de permisos con versión y procedencia.</h1>
         <p>
-          Cada catálogo tiene versión, fecha, fuente y alcance explícitos. El
-          editor de permisos personalizados sigue siendo el centro de Hiera.
+          Cada registro cita una fuente documental y fija cuándo se consultó.
+          Los nodos se muestran como referencia: confirma la versión de tu
+          plugin antes de aplicarlos.
         </p>
       </section>
       <section
@@ -36,10 +63,7 @@ export default function CatalogsPage() {
       >
         <div className="catalog-directory-heading">
           <h2 id="catalog-directory-title">Catálogos disponibles</h2>
-          <span>
-            {catalogs.length} fuente{catalogs.length === 1 ? "" : "s"} publicada
-            {catalogs.length === 1 ? "" : "s"}
-          </span>
+          <span>{catalogs.length} registro publicado</span>
         </div>
         <CatalogDirectory catalogs={catalogs} />
       </section>

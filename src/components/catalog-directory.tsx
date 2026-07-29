@@ -12,7 +12,7 @@ export function CatalogDirectory({ catalogs }: CatalogDirectoryProps) {
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    if (selected) dialog.current?.showModal();
+    if (selected && !dialog.current?.open) dialog.current?.showModal();
   }, [selected]);
 
   function close() {
@@ -23,28 +23,34 @@ export function CatalogDirectory({ catalogs }: CatalogDirectoryProps) {
   return (
     <>
       <div className="catalog-directory-grid">
-        {catalogs.map((catalog) => (
+        {catalogs.map((catalog, index) => (
           <article className="catalog-directory-card" key={catalog.slug}>
             <div className="catalog-card-index">
-              CAT / 0{catalogs.indexOf(catalog) + 1}
-            </div>
-            <div className="catalog-card-glyph" aria-hidden="true">
-              <span className="catalog-glyph-bar" />
-              <span className="catalog-glyph-bar" />
-              <span className="catalog-glyph-bar" />
+              REG / {String(index + 1).padStart(2, "0")}
             </div>
             <h2>{catalog.name}</h2>
             <p>{catalog.description}</p>
-            <div className="catalog-card-meta">
-              <span>{catalog.permissions.length} permisos</span>
-              <span>{catalog.version}</span>
-            </div>
+            <dl className="catalog-card-meta">
+              <div>
+                <dt>Nodos</dt>
+                <dd>{catalog.permissions.length}</dd>
+              </div>
+              <div>
+                <dt>Versión</dt>
+                <dd>{catalog.version}</dd>
+              </div>
+              <div>
+                <dt>Actualizado</dt>
+                <dd>{catalog.updatedAt}</dd>
+              </div>
+            </dl>
             <button
               type="button"
               className="catalog-card-action"
               onClick={() => setSelected(catalog)}
+              aria-haspopup="dialog"
             >
-              Ver ficha <ArrowUpRight size={15} aria-hidden="true" />
+              Consultar ficha <ArrowUpRight size={15} aria-hidden="true" />
             </button>
           </article>
         ))}
@@ -52,28 +58,35 @@ export function CatalogDirectory({ catalogs }: CatalogDirectoryProps) {
           className="catalog-directory-empty"
           aria-label="Próximos catálogos"
         >
-          <span className="catalog-card-index">CAT / 02—</span>
-          <h2>El siguiente catálogo lo decides tú.</h2>
+          <span className="catalog-card-index">REG / PRÓXIMAMENTE</span>
+          <h2>Registro abierto a fuentes verificables.</h2>
           <p>
-            Hiera solo incorpora fuentes verificables. El editor funciona igual
-            aunque tu plugin todavía no tenga catálogo.
+            Un catálogo necesita una fuente estable, versión identificable y
+            fecha de consulta. El estudio funciona aunque tu plugin no figure
+            aquí.
           </p>
           <a
             href="https://github.com/Aokaze/hiera/issues"
             target="_blank"
             rel="noreferrer"
           >
-            Proponer una fuente <ExternalLink size={14} aria-hidden="true" />
+            Proponer una fuente documental{" "}
+            <ExternalLink size={14} aria-hidden="true" />
           </a>
         </article>
       </div>
-      <dialog ref={dialog} className="catalog-detail-dialog" onClose={close}>
+      <dialog
+        ref={dialog}
+        className="catalog-detail-dialog"
+        aria-labelledby="catalog-detail-title"
+        onClose={close}
+      >
         {selected && (
           <article>
             <header>
               <div>
                 <p className="eyebrow">FICHA DOCUMENTAL</p>
-                <h2>{selected.name}</h2>
+                <h2 id="catalog-detail-title">{selected.name}</h2>
               </div>
               <button
                 type="button"
@@ -98,6 +111,20 @@ export function CatalogDirectory({ catalogs }: CatalogDirectoryProps) {
                 <dd>{selected.permissions.length}</dd>
               </div>
             </dl>
+            <section
+              className="catalog-detail-preview"
+              aria-labelledby="catalog-preview-title"
+            >
+              <h3 id="catalog-preview-title">Muestra de nodos</h3>
+              <ul>
+                {selected.permissions.slice(0, 4).map((permission) => (
+                  <li key={permission.node}>
+                    <code>{permission.node}</code>
+                    <span>{permission.category}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
             <div className="catalog-detail-links">
               <a href={selected.website} target="_blank" rel="noreferrer">
                 Plugin y descarga <ExternalLink size={14} aria-hidden="true" />

@@ -15,30 +15,23 @@ test("previsualiza y aplica una selección del catálogo al grupo elegido", asyn
   render(
     <CatalogPanel
       backup={backup}
-      catalog={authMeReloaded}
-      groupName="default"
+      catalogs={[authMeReloaded]}
+      selectedGroup="default"
       onApply={onApply}
-      dragRequest={null}
-      onStartPermissionDrag={vi.fn()}
-      onEndPermissionDrag={vi.fn()}
-      onApplyDroppedPermission={vi.fn()}
-      onCloseDragRequest={vi.fn()}
     />,
   );
 
+  await user.click(screen.getByRole("button", { name: /authme reloaded/i }));
   await user.type(
-    screen.getByPlaceholderText(/buscar nodo o descripción/i),
+    screen.getByPlaceholderText(/buscar permiso o descripción/i),
     "authme.admin.accounts",
   );
   await user.click(
-    screen.getByRole("checkbox", { name: /authme\.admin\.accounts/i }),
+    screen.getByLabelText(/añadir authme\.admin\.accounts a un grupo/i),
   );
-
-  expect(
-    screen.getByText(/añadir authme\.admin\.accounts/i),
-  ).toBeInTheDocument();
+  await user.click(screen.getByRole("button", { name: /añadir a default/i }));
   await user.click(
-    screen.getByRole("button", { name: /aplicar concesiones/i }),
+    screen.getByRole("button", { name: /confirmar concesión/i }),
   );
 
   expect(onApply).toHaveBeenCalledWith(

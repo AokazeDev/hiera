@@ -5,14 +5,15 @@ import {
   Network,
   ShieldCheck,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import { LandingMotion } from "@/components/landing-motion";
 
 const steps = [
   ["01", "Exporta", "/lp export hiera-backup.json"],
-  ["02", "Inspecciona", "Carga el archivo en el estudio local."],
-  ["03", "Decide", "Comprueba herencias y aplica permisos con contexto."],
+  ["02", "Abre", "Carga esa copia en el estudio local."],
+  ["03", "Revisa", "Comprueba herencias, contexto y procedencia."],
   ["04", "Importa", "/lp import hiera-backup.json --replace"],
 ];
 
@@ -25,7 +26,13 @@ export default function Home() {
     operatingSystem: "Web",
     url: "https://hiera.symera.cloud/",
     description:
-      "Editor local-first para inspeccionar y editar backups JSON de LuckPerms.",
+      "Editor gratuito, local y sin cuenta para inspeccionar backups JSON de LuckPerms.",
+    isAccessibleForFree: true,
+    featureList: [
+      "Procesamiento local en el navegador",
+      "Sin cuenta",
+      "Exportación JSON compatible con LuckPerms",
+    ],
   };
 
   return (
@@ -51,7 +58,7 @@ export default function Home() {
             HIERA<span>.</span>
           </Link>
           <div className="nav-links">
-            <a href="#flujo">Flujo</a>
+            <a href="#demostracion">Demostración</a>
             <a href="#principios">Principios</a>
             <Link href="/guia/permisos">Guía</Link>
             <Link href="/catalogos" transitionTypes={["hiera-forward"]}>
@@ -63,21 +70,35 @@ export default function Home() {
             href="/studio"
             transitionTypes={["hiera-forward"]}
           >
-            Abrir estudio <ArrowUpRight size={15} />
+            Abrir estudio local <ArrowUpRight size={15} />
           </Link>
         </nav>
 
         <section className="hero">
           <div className="hero-copy">
-            <p className="eyebrow">LUCKPERMS, SIN ADIVINAR</p>
+            <p className="eyebrow">EDITOR LOCAL DE BACKUPS DE LUCKPERMS</p>
             <h1>
-              La jerarquia de tu servidor, <em>por fin</em> legible.
+              Lee tus permisos <em>en local.</em>
             </h1>
             <p className="hero-lede">
-              Hiera convierte un respaldo de LuckPerms en un mapa operativo:
-              permisos directos, excepciones, usuarios y herencias en una misma
-              superficie de trabajo.
+              Hiera es gratis, funciona en tu navegador y no pide cuenta. Abre
+              una copia de LuckPerms para revisar permisos, usuarios, contextos
+              y herencias sin subir el archivo.
             </p>
+            <ul className="hero-facts" aria-label="Condiciones de uso de Hiera">
+              <li>
+                <strong>Gratis</strong>
+                <span>sin plan ni prueba</span>
+              </li>
+              <li>
+                <strong>Local</strong>
+                <span>el backup queda en el navegador</span>
+              </li>
+              <li>
+                <strong>Sin cuenta</strong>
+                <span>abre el archivo y empieza</span>
+              </li>
+            </ul>
             <div className="hero-actions">
               <Link
                 className="primary-action"
@@ -86,8 +107,8 @@ export default function Home() {
               >
                 Abrir el estudio <ArrowUpRight size={17} />
               </Link>
-              <a className="quiet-action" href="#flujo">
-                Como exportar un backup
+              <a className="quiet-action" href="#demostracion">
+                Ver el flujo local
               </a>
             </div>
           </div>
@@ -150,6 +171,59 @@ export default function Home() {
           </div>
         </section>
 
+        <section
+          className="product-sequence"
+          id="demostracion"
+          aria-labelledby="sequence-title"
+          data-reveal-section
+        >
+          <div className="sequence-intro">
+            <p className="eyebrow">DEMOSTRACIÓN EN EL NAVEGADOR</p>
+            <h2 id="sequence-title">
+              Importa una copia, mueve una decisión y exporta el resultado.
+            </h2>
+            <p>
+              Esta secuencia representa el flujo del estudio. El archivo se
+              procesa localmente; la salida es un JSON nuevo que eliges
+              descargar.
+            </p>
+          </div>
+          <figure className="sequence-media">
+            <video
+              className="sequence-video"
+              controls
+              aria-describedby="sequence-video-description"
+              poster="/hiera-local-workflow-poster.svg"
+              preload="metadata"
+            >
+              <source src="/hiera-local-workflow.webm" type="video/webm" />
+              <track
+                kind="captions"
+                src="/hiera-local-workflow.es.vtt"
+                srcLang="es"
+                label="Español"
+                default
+              />
+              Tu navegador no puede reproducir esta demostración de video.
+            </video>
+            <div className="sequence-video-fallback">
+              <Image
+                src="/hiera-local-workflow-poster.svg"
+                alt="Vista previa del paso de exportacion local: un backup JSON validado queda listo para descargar."
+                width={1200}
+                height={675}
+                unoptimized
+              />
+              <p>La animación se ha sustituido por una vista fija.</p>
+            </div>
+            <figcaption id="sequence-video-description">
+              Video de seis segundos: importa un backup JSON, revisa el permiso
+              <code>essentials.fly</code> entre grupos y exporta un archivo
+              validado. No se reproduce automáticamente.
+            </figcaption>
+          </figure>
+        </section>
+
         <section className="manifesto" id="principios" data-reveal-section>
           <p className="eyebrow">UN ARCHIVO NO DEBERIA SER UNA CAJA NEGRA</p>
           <p className="manifesto-copy">
@@ -175,10 +249,10 @@ export default function Home() {
             </article>
             <article>
               <Braces size={19} />
-              <h2>Catalogos trazables</h2>
+              <h2>Catálogos trazables</h2>
               <p>
-                Las plantillas declaran plugin, versión, origen, fecha y nivel
-                de recomendación.
+                Los catálogos declaran plugin, versión, origen y fecha de
+                actualización.
               </p>
             </article>
             <article>
@@ -258,14 +332,14 @@ export default function Home() {
         </section>
 
         <section className="closing" data-reveal-section>
-          <p className="eyebrow">EL EDITOR ES EL PRODUCTO</p>
+          <p className="eyebrow">FUENTES Y ARCHIVOS, SIN CAJAS NEGRAS</p>
           <h2>
-            Trabaja con cualquier plugin. Usa los catálogos cuando ayuden.
+            El estudio acepta tu backup. Los catálogos solo aportan referencia.
           </h2>
           <p>
-            Permisos personalizados, herencias, contextos y procedencia primero.
-            Las fuentes documentales son atajos verificables, no límites del
-            editor.
+            Los permisos personalizados, las herencias y los contextos no
+            dependen de un catálogo. Cuando existe una fuente, puedes comprobar
+            su versión y procedencia antes de usarla.
           </p>
           <Link
             className="primary-action"

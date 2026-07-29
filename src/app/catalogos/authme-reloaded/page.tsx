@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { authMeReloaded } from "@/lib/permissions";
+import {
+  authMeReloaded,
+  type PermissionAudience,
+  type PermissionEntry,
+} from "@/lib/permissions";
 
 export const metadata: Metadata = {
   title: "Catálogo de AuthMe Reloaded",
@@ -9,20 +13,50 @@ export const metadata: Metadata = {
   alternates: { canonical: "/catalogos/authme-reloaded" },
   openGraph: {
     url: "/catalogos/authme-reloaded",
+    title: "Catálogo de AuthMe Reloaded | Hiera",
+    description:
+      "Acceso documental verificable a los permisos de AuthMe Reloaded para usarlos localmente en Hiera.",
     images: [
       {
-        url: "/authme-reloaded-og.png",
+        url: "/og-authme.png",
         width: 1200,
-        height: 640,
-        alt: "Catálogo de permisos de AuthMe Reloaded en Hiera",
+        height: 630,
+        alt: "AuthMe Reloaded: catálogo de permisos en Hiera",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    images: ["/authme-reloaded-og.png"],
+    title: "Catálogo de AuthMe Reloaded | Hiera",
+    description:
+      "Acceso documental verificable a los permisos de AuthMe Reloaded para usarlos localmente en Hiera.",
+    images: [
+      {
+        url: "/og-authme.png",
+        alt: "AuthMe Reloaded: catálogo de permisos en Hiera",
+      },
+    ],
   },
 };
+
+const audienceLabels: Record<PermissionAudience, string> = {
+  admin: "administración",
+  player: "jugador",
+  group: "grupo",
+  sensitive: "sensible",
+};
+
+const permissionsByCategory = authMeReloaded.permissions.reduce<
+  Record<string, PermissionEntry[]>
+>((groups, permission) => {
+  const entries = groups[permission.category];
+  if (entries) {
+    entries.push(permission);
+  } else {
+    groups[permission.category] = [permission];
+  }
+  return groups;
+}, {});
 
 export default function AuthMeCatalogPage() {
   return (
@@ -35,8 +69,8 @@ export default function AuthMeCatalogPage() {
           Abrir estudio
         </Link>
       </nav>
-      <article className="document-content">
-        <p className="eyebrow">CATÁLOGO VERIFICABLE</p>
+      <article className="document-content catalog-document">
+        <p className="eyebrow">BIBLIOTECA / CATÁLOGO VERIFICABLE</p>
         <h1>{authMeReloaded.name}</h1>
         <p className="document-lede">{authMeReloaded.description}</p>
         <dl className="catalog-facts">
@@ -54,17 +88,55 @@ export default function AuthMeCatalogPage() {
           </div>
         </dl>
         <p>
-          Este acceso directo no sustituye la documentación del plugin.
-          Comprueba la versión y cualquier fork antes de aplicarlo a un
-          servidor.
+          Esta referencia no sustituye la documentación del plugin. Comprueba la
+          versión y cualquier fork antes de usar un nodo en un servidor.
         </p>
         <p>
           <a href={authMeReloaded.website}>Página oficial y descarga</a>
           {" · "}
           <a href={authMeReloaded.source}>Fuente documental exacta</a>
         </p>
+        <section
+          className="catalog-reference"
+          aria-labelledby="catalog-reference-title"
+        >
+          <div className="catalog-reference-heading">
+            <div>
+              <p className="eyebrow">ÍNDICE DE NODOS</p>
+              <h2 id="catalog-reference-title">Permisos documentados</h2>
+            </div>
+            <span>{authMeReloaded.permissions.length} nodos</span>
+          </div>
+          <div className="catalog-reference-groups">
+            {Object.entries(permissionsByCategory).map(
+              ([category, permissions]) => (
+                <section
+                  key={category}
+                  aria-labelledby={`category-${category}`}
+                >
+                  <h3 id={`category-${category}`}>{category}</h3>
+                  <ul>
+                    {permissions.map((permission) => (
+                      <li key={permission.node}>
+                        <div>
+                          <code>{permission.node}</code>
+                          <p>{permission.description}</p>
+                        </div>
+                        <span>
+                          {permission.audience
+                            .map((audience) => audienceLabels[audience])
+                            .join(" · ")}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ),
+            )}
+          </div>
+        </section>
         <Link className="primary-action" href="/studio">
-          Usar el catálogo en el estudio
+          Abrir el estudio local
         </Link>
       </article>
     </main>

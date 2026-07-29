@@ -3,7 +3,7 @@
 import { GripVertical, Info, ShieldAlert, UserRound } from "lucide-react";
 import { useState } from "react";
 import { EditHistory } from "@/components/studio/edit-history";
-import { GroupInheritanceEditor } from "@/components/studio/group-inheritance-editor";
+import { NodeInspector } from "@/components/studio/node-inspector";
 import { PermissionContextEditor } from "@/components/studio/permission-context-editor";
 import {
   type BackupHistory,
@@ -20,9 +20,6 @@ type ResolutionPanelProps = {
   history: BackupHistory;
   onUndo: () => void;
   onRedo: () => void;
-  onSelectGroup: (group: string) => void;
-  onAddInheritance: (parentName: string) => void;
-  onRemoveInheritance: (nodeIndex: number) => void;
   onPreparePermissionTransfer: (sourceGroup: string, nodeIndex: number) => void;
   activeContext: PermissionContext;
   onActiveContextChange: (context: PermissionContext) => void;
@@ -42,9 +39,6 @@ export function ResolutionPanel({
   history,
   onUndo,
   onRedo,
-  onSelectGroup,
-  onAddInheritance,
-  onRemoveInheritance,
   onPreparePermissionTransfer,
   activeContext,
   onActiveContextChange,
@@ -175,18 +169,15 @@ export function ResolutionPanel({
             <span className="group-mark" />
             {groupName}
           </div>
-          <GroupInheritanceEditor
-            backup={backup}
-            groupName={groupName}
-            onAdd={onAddInheritance}
-            onRemove={onRemoveInheritance}
-            onSelectGroup={onSelectGroup}
-          />
           <div className="effective-count">
             <strong>{totalCount}</strong>
             <span>permisos efectivos</span>
           </div>
           {renderEffectiveList()}
+          <NodeInspector
+            nodes={group.nodes}
+            subjectLabel={`el grupo ${groupName}`}
+          />
         </>
       ) : backup && user && userId ? (
         <>
@@ -199,6 +190,10 @@ export function ResolutionPanel({
             <span>permisos efectivos</span>
           </div>
           {renderEffectiveList()}
+          <NodeInspector
+            nodes={user.nodes}
+            subjectLabel={`el usuario ${selectedName}`}
+          />
         </>
       ) : (
         <div className="resolution-empty">

@@ -1,14 +1,7 @@
 "use client";
 
 import gsap from "gsap";
-import {
-  BookOpen,
-  FilePenLine,
-  FileUp,
-  GitCompareArrows,
-  ListFilter,
-  Network,
-} from "lucide-react";
+import { BookOpen, FileUp } from "lucide-react";
 import Link from "next/link";
 import {
   startTransition,
@@ -17,31 +10,25 @@ import {
   useState,
   ViewTransition,
 } from "react";
-import { BackupRail } from "@/components/studio/backup-rail";
 import { CatalogPanel } from "@/components/studio/catalog-panel";
-import { EffectivePermissionBrowser } from "@/components/studio/effective-permission-browser";
 import { ExportPreview } from "@/components/studio/export-preview";
-import { GroupComparison } from "@/components/studio/group-comparison";
-import { GroupPermissionEditor } from "@/components/studio/group-permission-editor";
-import { InheritanceGraph } from "@/components/studio/inheritance-graph";
+import { PermissionCanvas } from "@/components/studio/permission-canvas";
+import { PermissionTransferPanel } from "@/components/studio/permission-transfer-panel";
 import { ResolutionPanel } from "@/components/studio/resolution-panel";
 import { StudioFeedback } from "@/components/studio/studio-feedback";
-import { UserMembershipEditor } from "@/components/studio/user-membership-editor";
 import type {
-  CatalogPermissionDecision,
+  PermissionBatchDecision,
   PermissionContext,
   PermissionTransferMode,
 } from "@/lib/luckperms";
 import {
   addGroupInheritance,
   addUserMembership,
-  applyCatalogPermissionDecision,
   applyPermissionBatch,
   createGroup,
   deleteGroup,
   emptyBackupHistory,
   parseLuckPermsBackup,
-  previewPermissionBatch,
   recordBackupChange,
   redoBackupChange,
   removeDirectPermission,
@@ -59,8 +46,10 @@ import {
   undoBackupChange,
   upsertGlobalPermission,
   upsertUserGlobalPermission,
+  validateGroupInheritance,
+  validateUserMembership,
 } from "@/lib/luckperms";
-import { authMeReloaded, type LuckPermsBackup } from "@/lib/permissions";
+import { catalogs, type LuckPermsBackup } from "@/lib/permissions";
 
 type PendingPermissionTransfer = {
   sourceGroup: string;
@@ -68,9 +57,6 @@ type PendingPermissionTransfer = {
   targetGroup: string | null;
 };
 
-type DraggedPermission = Omit<PendingPermissionTransfer, "targetGroup">;
-type PendingCatalogPermission = { permissionKey: string; targetGroup: string };
-type PermissionProvenance = { key: string; origin: string; inherited: boolean };
 type StudioFeedbackMessage = { id: number; message: string };
 
 export function Studio() {
@@ -85,43 +71,22 @@ export function Studio() {
   const [history, setHistory] = useState(emptyBackupHistory);
   const [pendingTransfer, setPendingTransfer] =
     useState<PendingPermissionTransfer | null>(null);
-  const [draggedPermission, setDraggedPermission] =
-    useState<DraggedPermission | null>(null);
-  const [draggedCatalogPermission, setDraggedCatalogPermission] = useState<
-    string | null
-  >(null);
-  const [pendingCatalogPermission, setPendingCatalogPermission] =
-    useState<PendingCatalogPermission | null>(null);
-  const [permissionProvenance, setPermissionProvenance] =
-    useState<PermissionProvenance | null>(null);
   const [activeContext, setActiveContext] = useState<PermissionContext>({});
-  const [workspace, setWorkspace] = useState<
-    "editor" | "catalog" | "comparison" | "effective" | "inheritance"
-  >("editor");
+  const [workspace, setWorkspace] = useState<"editor" | "catalog">("editor");
   const [feedback, setFeedback] = useState<StudioFeedbackMessage | null>(null);
   const [importIssues, setImportIssues] = useState<string[]>([]);
-  const catalog = new Map(
-    authMeReloaded.permissions.map((permission) => [
-      permission.node,
-      permission,
-    ]),
-  );
 
   useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: no-preference)");
-    if (!root.current || !media.matches) return;
+    if (
+      !root.current ||
+      !window.matchMedia("(prefers-reduced-motion: no-preference)").matches
+    )
+      return;
     const context = gsap.context(() => {
-      gsap.from("[data-studio-intro]", {
-        opacity: 0,
-        y: 18,
-        duration: 0.55,
-        ease: "power3.out",
-      });
       gsap.from("[data-studio-pane]", {
         opacity: 0,
-        y: 22,
-        duration: 0.65,
-        delay: 0.12,
+        y: 16,
+        duration: 0.45,
         ease: "power3.out",
       });
     }, root);
@@ -133,6 +98,10 @@ export function Studio() {
     const timeout = window.setTimeout(() => setFeedback(null), 3200);
     return () => window.clearTimeout(timeout);
   }, [feedback]);
+
+  function announce(message: string) {
+    setFeedback((current) => ({ id: (current?.id ?? 0) + 1, message }));
+  }
 
   function importBackup(file: File) {
     const reader = new FileReader();
@@ -155,11 +124,8 @@ export function Studio() {
       setSelectedUser(null);
       setHistory(emptyBackupHistory);
       setPendingTransfer(null);
-      setDraggedPermission(null);
-      setDraggedCatalogPermission(null);
-      setPendingCatalogPermission(null);
-      setPermissionProvenance(null);
       setActiveContext({});
+      setWorkspace("editor");
       announce(`Backup ${file.name} importado solo en esta sesión.`);
     };
     reader.onerror = () =>
@@ -174,264 +140,238 @@ export function Studio() {
     announce(`${label}. Cambio aplicado.`);
   }
 
-  function announce(message: string) {
-    setFeedback((current) => ({ id: (current?.id ?? 0) + 1, message }));
+  function selectGroup(groupName: string) {
+    setSelectedGroup(groupName);
+    setSelectedUser(null);
   }
 
-  function applyPermissions(
-    nodes: string[],
-    groupNames: string[],
-    decision: import("@/lib/luckperms").PermissionBatchDecision,
-  ) {
+  function selectUser(userId: string) {
+    setSelectedUser(userId);
+    setSelectedGroup(null);
+  }
+
+  function addPermission(groupName: string, key: string) {
     if (!backup) return;
-    const preview = previewPermissionBatch(backup, groupNames, nodes, decision);
-    if (preview.changeCount === 0) return;
-    const operation = {
-      grant: "Conceder",
-      deny: "Denegar",
-      remove: "Eliminar",
-    }[decision];
     updateBackup(
-      applyPermissionBatch(backup, groupNames, nodes, decision),
-      `${operation} ${preview.changeCount} permisos de AuthMe Reloaded en ${preview.targets.length} grupos`,
+      upsertGlobalPermission(backup, groupName, key, true),
+      `Conceder ${key} en ${groupName}`,
     );
   }
 
-  function addPermission(key: string, value: boolean) {
-    if (!backup || !selectedGroup) return;
-    updateBackup(
-      upsertGlobalPermission(backup, selectedGroup, key, value),
-      `${value ? "Conceder" : "Denegar"} ${key} en ${selectedGroup}`,
-    );
-  }
-
-  function setPermissionValue(nodeIndex: number, value: boolean) {
-    if (!backup || !selectedGroup) return;
-    updateBackup(
-      setDirectPermissionValue(backup, selectedGroup, nodeIndex, value),
-      `${value ? "Conceder" : "Denegar"} permiso en ${selectedGroup}`,
-    );
-  }
-
-  function setPermissionContext(nodeIndex: number, context: PermissionContext) {
-    if (!backup || !selectedGroup) return;
-    updateBackup(
-      setDirectPermissionContext(backup, selectedGroup, nodeIndex, context),
-      `Actualizar contexto de permiso en ${selectedGroup}`,
-    );
-  }
-
-  function removePermission(nodeIndex: number) {
-    if (!backup || !selectedGroup) return;
-    updateBackup(
-      removeDirectPermission(backup, selectedGroup, nodeIndex),
-      `Eliminar permiso de ${selectedGroup}`,
-    );
-  }
-
-  function transferPermission(
+  function setPermissionValue(
+    groupName: string,
     nodeIndex: number,
-    targetGroup: string,
-    mode: PermissionTransferMode,
-  ) {
-    if (!backup || !selectedGroup) return;
-    const node = backup.groups[selectedGroup]?.nodes[nodeIndex];
-    if (!node || node.type !== "permission") return;
-    const operation = {
-      copy: "Copiar",
-      move: "Mover",
-      grant: "Conceder",
-      deny: "Denegar",
-      remove: "Eliminar",
-    }[mode];
-    updateBackup(
-      transferGroupPermission(
-        backup,
-        selectedGroup,
-        nodeIndex,
-        targetGroup,
-        mode,
-      ),
-      `${operation} ${node.key} ${mode === "remove" ? "de" : "en"} ${targetGroup}`,
-    );
-    setPendingTransfer(null);
-  }
-
-  function preparePermissionTransfer(
-    nodeIndex: number,
-    sourceGroup = selectedGroup,
-  ) {
-    if (!sourceGroup) return;
-    setPendingTransfer({
-      sourceGroup,
-      nodeIndex,
-      targetGroup: null,
-    });
-  }
-
-  function prepareGroupPermissionTransfer(
-    sourceGroup: string,
-    nodeIndex: number,
-  ) {
-    setSelectedGroup(sourceGroup);
-    setSelectedUser(null);
-    selectWorkspace("editor");
-    preparePermissionTransfer(nodeIndex, sourceGroup);
-  }
-
-  function startPermissionDrag(nodeIndex: number, sourceGroup = selectedGroup) {
-    if (!sourceGroup) return;
-    setDraggedCatalogPermission(null);
-    setDraggedPermission({ sourceGroup, nodeIndex });
-  }
-
-  function dropPermissionOnGroup(targetGroup: string) {
-    if (!draggedPermission) return;
-    setPendingTransfer({ ...draggedPermission, targetGroup });
-    setSelectedGroup(draggedPermission.sourceGroup);
-    setSelectedUser(null);
-    selectWorkspace("editor");
-    setDraggedPermission(null);
-  }
-
-  function startCatalogPermissionDrag(permissionKey: string) {
-    setDraggedPermission(null);
-    setDraggedCatalogPermission(permissionKey);
-  }
-
-  function dropCatalogPermissionOnGroup(targetGroup: string) {
-    if (!draggedCatalogPermission) return;
-    setPendingCatalogPermission({
-      permissionKey: draggedCatalogPermission,
-      targetGroup,
-    });
-    selectWorkspace("catalog");
-    setDraggedCatalogPermission(null);
-  }
-
-  function applyDroppedCatalogPermission(
-    permissionKey: string,
-    targetGroup: string,
-    decision: CatalogPermissionDecision,
+    value: boolean,
   ) {
     if (!backup) return;
     updateBackup(
-      applyCatalogPermissionDecision(
-        backup,
-        permissionKey,
-        targetGroup,
-        decision,
-      ),
-      `${decision === "grant" ? "Conceder" : "Denegar"} ${permissionKey} de AuthMe Reloaded en ${targetGroup}`,
-    );
-    setPendingCatalogPermission(null);
-  }
-
-  function addInheritance(parentName: string) {
-    if (!backup || !selectedGroup) return;
-    updateBackup(
-      addGroupInheritance(backup, selectedGroup, parentName),
-      `Heredar ${parentName} en ${selectedGroup}`,
+      setDirectPermissionValue(backup, groupName, nodeIndex, value),
+      `${value ? "Conceder" : "Denegar"} permiso en ${groupName}`,
     );
   }
 
-  function removeInheritance(nodeIndex: number) {
-    if (!backup || !selectedGroup) return;
+  function removePermission(groupName: string, nodeIndex: number) {
+    if (!backup) return;
     updateBackup(
-      removeGroupInheritance(backup, selectedGroup, nodeIndex),
-      `Quitar herencia de ${selectedGroup}`,
+      removeDirectPermission(backup, groupName, nodeIndex),
+      `Eliminar permiso de ${groupName}`,
     );
   }
 
-  function addMembership(groupName: string) {
-    if (!backup || !selectedUser) return;
+  function setPermissionContext(
+    groupName: string,
+    nodeIndex: number,
+    context: PermissionContext,
+  ) {
+    if (!backup) return;
     updateBackup(
-      addUserMembership(backup, selectedUser, groupName),
+      setDirectPermissionContext(backup, groupName, nodeIndex, context),
+      `Actualizar contexto de permiso en ${groupName}`,
+    );
+  }
+
+  function addInheritance(groupName: string, parentName: string) {
+    if (!backup) return;
+    const error = validateGroupInheritance(backup, groupName, parentName);
+    if (error) {
+      announce(error);
+      return;
+    }
+    updateBackup(
+      addGroupInheritance(backup, groupName, parentName),
+      `${groupName} hereda de ${parentName}`,
+    );
+  }
+
+  function removeInheritance(groupName: string, parentName: string) {
+    if (!backup) return;
+    const nodeIndex = backup.groups[groupName]?.nodes.findIndex(
+      (node) =>
+        node.type === "inheritance" &&
+        node.value &&
+        node.key === `group.${parentName}`,
+    );
+    if (nodeIndex === undefined || nodeIndex < 0) return;
+    updateBackup(
+      removeGroupInheritance(backup, groupName, nodeIndex),
+      `Quitar herencia de ${parentName} en ${groupName}`,
+    );
+  }
+
+  function addMembership(userId: string, groupName: string) {
+    if (!backup) return;
+    const error = validateUserMembership(backup, userId, groupName);
+    if (error) {
+      announce(error);
+      return;
+    }
+    updateBackup(
+      addUserMembership(backup, userId, groupName),
       `Añadir usuario a ${groupName}`,
     );
   }
 
-  function removeMembership(nodeIndex: number) {
-    if (!backup || !selectedUser) return;
+  function removeMembership(userId: string, groupName: string) {
+    if (!backup) return;
+    const nodeIndex = backup.users?.[userId]?.nodes.findIndex(
+      (node) =>
+        node.type === "inheritance" &&
+        node.value &&
+        node.key === `group.${groupName}`,
+    );
+    if (nodeIndex === undefined || nodeIndex < 0) return;
     updateBackup(
-      removeUserMembership(backup, selectedUser, nodeIndex),
-      "Quitar membresía de usuario",
+      removeUserMembership(backup, userId, nodeIndex),
+      `Quitar usuario de ${groupName}`,
     );
   }
 
-  function changePrimaryGroup(groupName: string | null) {
-    if (!backup || !selectedUser) return;
+  function changeUserPrimaryGroup(userId: string, groupName: string | null) {
+    if (!backup) return;
     updateBackup(
-      setUserPrimaryGroup(backup, selectedUser, groupName),
+      setUserPrimaryGroup(backup, userId, groupName),
       groupName
         ? `Cambiar grupo primario a ${groupName}`
-        : "Limpiar grupo primario de usuario",
+        : "Limpiar grupo primario",
     );
   }
 
-  function addUserPermission(key: string, value: boolean) {
-    if (!backup || !selectedUser) return;
+  function addUserPermission(userId: string, key: string) {
+    if (!backup) return;
     updateBackup(
-      upsertUserGlobalPermission(backup, selectedUser, key, value),
-      `${value ? "Conceder" : "Denegar"} ${key} a usuario`,
+      upsertUserGlobalPermission(backup, userId, key, true),
+      `Conceder ${key} al usuario`,
     );
   }
 
-  function setUserPermissionValue(nodeIndex: number, value: boolean) {
-    if (!backup || !selectedUser) return;
+  function setUserPermissionValue(
+    userId: string,
+    nodeIndex: number,
+    value: boolean,
+  ) {
+    if (!backup) return;
     updateBackup(
-      setUserDirectPermissionValue(backup, selectedUser, nodeIndex, value),
+      setUserDirectPermissionValue(backup, userId, nodeIndex, value),
       `${value ? "Conceder" : "Denegar"} permiso de usuario`,
     );
   }
 
-  function setUserPermissionContext(
-    nodeIndex: number,
-    context: PermissionContext,
-  ) {
-    if (!backup || !selectedUser) return;
+  function removeUserPermission(userId: string, nodeIndex: number) {
+    if (!backup) return;
     updateBackup(
-      setUserDirectPermissionContext(backup, selectedUser, nodeIndex, context),
-      "Actualizar contexto de permiso de usuario",
+      removeUserDirectPermission(backup, userId, nodeIndex),
+      "Eliminar permiso de usuario",
     );
   }
 
-  function removeUserPermission(nodeIndex: number) {
-    if (!backup || !selectedUser) return;
+  function setUserPermissionContext(
+    userId: string,
+    nodeIndex: number,
+    context: PermissionContext,
+  ) {
+    if (!backup) return;
     updateBackup(
-      removeUserDirectPermission(backup, selectedUser, nodeIndex),
-      "Eliminar permiso de usuario",
+      setUserDirectPermissionContext(backup, userId, nodeIndex, context),
+      "Actualizar contexto de permiso de usuario",
     );
   }
 
   function createNewGroup(groupName: string) {
     if (!backup) return;
-    updateBackup(createGroup(backup, groupName), `Crear grupo ${groupName}`);
+    const next = createGroup(backup, groupName);
+    if (next === backup) {
+      announce(
+        "No se pudo crear el grupo. Revisa que el nombre sea único y válido.",
+      );
+      return;
+    }
+    updateBackup(next, `Crear grupo ${groupName}`);
     setSelectedGroup(groupName);
-    setSelectedUser(null);
   }
 
-  function renameSelectedGroup(groupName: string) {
-    if (!backup || !selectedGroup) return;
-    updateBackup(
-      renameGroup(backup, selectedGroup, groupName),
-      `Renombrar ${selectedGroup} a ${groupName}`,
-    );
-    setSelectedGroup(groupName);
-    setSelectedUser(null);
+  function renameCanvasGroup(groupName: string, nextName: string) {
+    if (!backup) return;
+    const next = renameGroup(backup, groupName, nextName);
+    if (next === backup) {
+      announce("No se pudo renombrar el grupo. Revisa el nombre elegido.");
+      return;
+    }
+    updateBackup(next, `Renombrar ${groupName} a ${nextName}`);
+    if (selectedGroup === groupName) setSelectedGroup(nextName);
   }
 
-  function deleteSelectedGroup() {
-    if (!backup || !selectedGroup) return;
-    const remainingGroups = Object.keys(backup.groups).filter(
-      (name) => name !== selectedGroup,
-    );
+  function deleteCanvasGroup(groupName: string) {
+    if (!backup) return;
+    const next = deleteGroup(backup, groupName);
+    if (next === backup) {
+      announce("No se puede eliminar un grupo que todavía tiene referencias.");
+      return;
+    }
+    updateBackup(next, `Eliminar grupo ${groupName}`);
+    if (selectedGroup === groupName)
+      setSelectedGroup(Object.keys(next.groups)[0] ?? null);
+  }
+
+  function preparePermissionTransfer(sourceGroup: string, nodeIndex: number) {
+    setSelectedGroup(sourceGroup);
+    setPendingTransfer({ sourceGroup, nodeIndex, targetGroup: null });
+  }
+
+  function transferPermission(
+    targetGroup: string,
+    mode: PermissionTransferMode,
+  ) {
+    if (!backup || !pendingTransfer) return;
+    const node =
+      backup.groups[pendingTransfer.sourceGroup]?.nodes[
+        pendingTransfer.nodeIndex
+      ];
+    if (!node || node.type !== "permission") return;
     updateBackup(
-      deleteGroup(backup, selectedGroup),
-      `Eliminar grupo ${selectedGroup}`,
+      transferGroupPermission(
+        backup,
+        pendingTransfer.sourceGroup,
+        pendingTransfer.nodeIndex,
+        targetGroup,
+        mode,
+      ),
+      `${mode === "copy" ? "Copiar" : mode === "move" ? "Mover" : mode === "grant" ? "Conceder" : mode === "deny" ? "Denegar" : "Eliminar"} ${node.key}`,
     );
-    setSelectedGroup(remainingGroups[0] ?? null);
-    setSelectedUser(null);
+    setPendingTransfer(null);
+  }
+
+  function applyCatalogPermissions(
+    nodes: string[],
+    groupNames: string[],
+    decision: PermissionBatchDecision,
+  ) {
+    if (!backup) return;
+    const next = applyPermissionBatch(backup, groupNames, nodes, decision);
+    if (next === backup) return;
+    updateBackup(
+      next,
+      `Conceder ${nodes.length} permisos documentados en ${groupNames.join(", ")}`,
+    );
   }
 
   function exportBackup(stableFormat: boolean) {
@@ -467,49 +407,13 @@ export function Studio() {
     announce(`Rehecho: ${history.future[0]?.label ?? "último cambio"}.`);
   }
 
-  function inspectPermissionOrigin(provenance: PermissionProvenance) {
-    if (!selectedGroup && !selectedUser) return;
-    setPermissionProvenance(provenance);
-    selectWorkspace("inheritance");
-  }
-
-  function selectWorkspace(
-    nextWorkspace:
-      | "editor"
-      | "catalog"
-      | "comparison"
-      | "effective"
-      | "inheritance",
-  ) {
-    if (nextWorkspace === workspace) return;
-    startTransition(() => setWorkspace(nextWorkspace));
-  }
-
-  function selectGroup(groupName: string) {
-    if (groupName === selectedGroup && !selectedUser) return;
-    setSelectedGroup(groupName);
-    setSelectedUser(null);
-    setPermissionProvenance(null);
-    announce(`Grupo ${groupName} seleccionado.`);
-  }
-
-  function selectUser(userId: string) {
-    if (userId === selectedUser && !selectedGroup) return;
-    setSelectedUser(userId);
-    setSelectedGroup(null);
-    setPermissionProvenance(null);
-    announce(
-      `Usuario ${backup?.users?.[userId]?.username ?? userId} seleccionado.`,
-    );
-  }
-
   return (
     <main ref={root} className="studio-shell">
       <header className="studio-header">
         <Link href="/" className="wordmark" transitionTypes={["hiera-back"]}>
           HIERA<span>.</span>
         </Link>
-        <p>Estudio local de permisos</p>
+        <p>Editor local de LuckPerms</p>
         <div>
           <button
             type="button"
@@ -521,43 +425,17 @@ export function Studio() {
           <nav className="workspace-switch" aria-label="Vista principal">
             <button
               type="button"
-              className={workspace === "editor" ? "is-active" : ""}
-              aria-pressed={workspace === "editor"}
-              onClick={() => selectWorkspace("editor")}
-            >
-              <FilePenLine size={15} /> Editor
-            </button>
-            <button
-              type="button"
               className={workspace === "catalog" ? "is-active" : ""}
               aria-pressed={workspace === "catalog"}
-              onClick={() => selectWorkspace("catalog")}
+              onClick={() =>
+                startTransition(() =>
+                  setWorkspace((current) =>
+                    current === "catalog" ? "editor" : "catalog",
+                  ),
+                )
+              }
             >
               <BookOpen size={15} /> Catálogo
-            </button>
-            <button
-              type="button"
-              className={workspace === "comparison" ? "is-active" : ""}
-              aria-pressed={workspace === "comparison"}
-              onClick={() => selectWorkspace("comparison")}
-            >
-              <GitCompareArrows size={15} /> Comparar
-            </button>
-            <button
-              type="button"
-              className={workspace === "effective" ? "is-active" : ""}
-              aria-pressed={workspace === "effective"}
-              onClick={() => selectWorkspace("effective")}
-            >
-              <ListFilter size={15} /> Resolver
-            </button>
-            <button
-              type="button"
-              className={workspace === "inheritance" ? "is-active" : ""}
-              aria-pressed={workspace === "inheritance"}
-              onClick={() => selectWorkspace("inheritance")}
-            >
-              <Network size={15} /> Herencias
             </button>
           </nav>
           {backup && originalBackup && (
@@ -584,124 +462,65 @@ export function Studio() {
       {feedback && (
         <StudioFeedback id={feedback.id} message={feedback.message} />
       )}
-      <section className="studio-intro" data-studio-intro>
-        <p className="eyebrow">ESTUDIO</p>
-        <h1>El permiso correcto, en el lugar correcto.</h1>
-        <p>
-          Importa un export de LuckPerms o explora un catálogo verificado. Las
-          modificaciones quedan en esta sesión hasta que exportes el JSON.
-        </p>
-        {importIssues.length > 0 && (
-          <div className="import-validation-error" role="alert">
-            <strong>No se pudo importar el backup.</strong>
-            <ul>
-              {importIssues.map((issue) => (
-                <li key={issue}>{issue}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-      </section>
+      {importIssues.length > 0 && (
+        <div
+          className="import-validation-error studio-import-error"
+          role="alert"
+        >
+          <strong>No se pudo importar el backup.</strong>
+          <ul>
+            {importIssues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <section className="studio-grid" data-studio-pane>
-        <BackupRail
-          backup={backup}
-          selectedGroup={selectedGroup}
-          selectedUser={selectedUser}
-          onSelectGroup={selectGroup}
-          onSelectUser={selectUser}
-          onImport={() => input.current?.click()}
-          onCreateGroup={createNewGroup}
-          onRenameGroup={renameSelectedGroup}
-          onDeleteGroup={deleteSelectedGroup}
-          draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
-          draggingCatalogPermission={Boolean(draggedCatalogPermission)}
-          onDropPermission={dropPermissionOnGroup}
-          onDropCatalogPermission={dropCatalogPermissionOnGroup}
-          onPrepareGroupTransfer={prepareGroupPermissionTransfer}
-          onStartGroupDrag={(sourceGroup, nodeIndex) =>
-            startPermissionDrag(nodeIndex, sourceGroup)
-          }
-          onEndGroupDrag={() => setDraggedPermission(null)}
-        />
         <ViewTransition update="workspace-swap" default="none">
-          {workspace === "comparison" ? (
-            <GroupComparison backup={backup} initialGroup={selectedGroup} />
-          ) : workspace === "effective" ? (
-            <EffectivePermissionBrowser
-              backup={backup}
-              groupName={selectedGroup}
-              userId={selectedUser}
-              activeContext={activeContext}
-              catalog={catalog}
-              onInspectPermissionOrigin={inspectPermissionOrigin}
-              onPreparePermissionTransfer={prepareGroupPermissionTransfer}
-              onStartPermissionDrag={(sourceGroup, nodeIndex) =>
-                startPermissionDrag(nodeIndex, sourceGroup)
-              }
-              onEndPermissionDrag={() => setDraggedPermission(null)}
-            />
-          ) : workspace === "inheritance" ? (
-            <InheritanceGraph
-              backup={backup}
-              groupName={selectedGroup}
-              userId={selectedUser}
-              activeContext={activeContext}
-              onSelectGroup={selectGroup}
-              draggingPermissionFrom={draggedPermission?.sourceGroup ?? null}
-              draggingCatalogPermission={Boolean(draggedCatalogPermission)}
-              onDropPermission={dropPermissionOnGroup}
-              onDropCatalogPermission={dropCatalogPermissionOnGroup}
-              onStartGroupDrag={(sourceGroup, nodeIndex) =>
-                startPermissionDrag(nodeIndex, sourceGroup)
-              }
-              onEndGroupDrag={() => setDraggedPermission(null)}
-              permissionProvenance={permissionProvenance}
-            />
-          ) : workspace === "editor" && selectedUser ? (
-            <UserMembershipEditor
-              backup={backup}
-              userId={selectedUser}
-              onAddMembership={addMembership}
-              onRemoveMembership={removeMembership}
-              onSetPrimaryGroup={changePrimaryGroup}
-              onAddPermission={addUserPermission}
-              onSetPermissionValue={setUserPermissionValue}
-              onSetPermissionContext={setUserPermissionContext}
-              onRemovePermission={removeUserPermission}
-              catalog={catalog}
-            />
-          ) : workspace === "editor" ? (
-            <GroupPermissionEditor
-              backup={backup}
-              groupName={selectedGroup}
-              onAdd={addPermission}
-              onSetValue={setPermissionValue}
-              onSetContext={setPermissionContext}
-              onRemove={removePermission}
-              onTransfer={transferPermission}
-              transferRequest={
-                pendingTransfer?.sourceGroup === selectedGroup
-                  ? pendingTransfer
-                  : null
-              }
-              onPrepareTransfer={preparePermissionTransfer}
-              onStartDrag={startPermissionDrag}
-              onEndDrag={() => setDraggedPermission(null)}
-              onCloseTransfer={() => setPendingTransfer(null)}
-              catalog={catalog}
-            />
-          ) : (
+          {workspace === "catalog" ? (
             <CatalogPanel
               backup={backup}
-              catalog={authMeReloaded}
-              groupName={selectedGroup}
-              onApply={applyPermissions}
-              dragRequest={pendingCatalogPermission}
-              onStartPermissionDrag={startCatalogPermissionDrag}
-              onEndPermissionDrag={() => setDraggedCatalogPermission(null)}
-              onApplyDroppedPermission={applyDroppedCatalogPermission}
-              onCloseDragRequest={() => setPendingCatalogPermission(null)}
+              catalogs={catalogs}
+              selectedGroup={selectedGroup}
+              onApply={applyCatalogPermissions}
             />
+          ) : (
+            <div className="studio-canvas-column">
+              <PermissionCanvas
+                backup={backup}
+                selectedGroup={selectedGroup}
+                selectedUser={selectedUser}
+                onSelectGroup={selectGroup}
+                onSelectUser={selectUser}
+                onCreateGroup={createNewGroup}
+                onRenameGroup={renameCanvasGroup}
+                onDeleteGroup={deleteCanvasGroup}
+                onAddPermission={addPermission}
+                onSetPermissionValue={setPermissionValue}
+                onRemovePermission={removePermission}
+                onSetPermissionContext={setPermissionContext}
+                onAddInheritance={addInheritance}
+                onRemoveInheritance={removeInheritance}
+                onAddUserMembership={addMembership}
+                onRemoveUserMembership={removeMembership}
+                onSetUserPrimaryGroup={changeUserPrimaryGroup}
+                onAddUserPermission={addUserPermission}
+                onSetUserPermissionValue={setUserPermissionValue}
+                onRemoveUserPermission={removeUserPermission}
+                onSetUserPermissionContext={setUserPermissionContext}
+                onPrepareTransfer={preparePermissionTransfer}
+              />
+              {backup && pendingTransfer && (
+                <PermissionTransferPanel
+                  backup={backup}
+                  sourceGroup={pendingTransfer.sourceGroup}
+                  sourceNodeIndex={pendingTransfer.nodeIndex}
+                  initialTargetGroup={pendingTransfer.targetGroup}
+                  onTransfer={transferPermission}
+                  onClose={() => setPendingTransfer(null)}
+                />
+              )}
+            </div>
           )}
         </ViewTransition>
         <ResolutionPanel
@@ -711,17 +530,16 @@ export function Studio() {
           history={history}
           onUndo={undo}
           onRedo={redo}
-          onSelectGroup={selectGroup}
-          onAddInheritance={addInheritance}
-          onRemoveInheritance={removeInheritance}
-          onPreparePermissionTransfer={prepareGroupPermissionTransfer}
+          onPreparePermissionTransfer={preparePermissionTransfer}
           activeContext={activeContext}
           onActiveContextChange={setActiveContext}
-          onInspectPermissionOrigin={inspectPermissionOrigin}
-          onStartPermissionDrag={(sourceGroup, nodeIndex) =>
-            startPermissionDrag(nodeIndex, sourceGroup)
-          }
-          onEndPermissionDrag={() => setDraggedPermission(null)}
+          onInspectPermissionOrigin={(permission) => {
+            setSelectedGroup(permission.origin);
+            setSelectedUser(null);
+            announce(`Origen de ${permission.key}: ${permission.origin}.`);
+          }}
+          onStartPermissionDrag={() => undefined}
+          onEndPermissionDrag={() => undefined}
         />
       </section>
     </main>

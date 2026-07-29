@@ -4,6 +4,7 @@ export type PermissionEntry = {
   node: string;
   description: string;
   audience: PermissionAudience[];
+  recommendedFor?: Array<"admin" | "player">;
   category: string;
 };
 
@@ -49,6 +50,11 @@ function authme(
     description,
     category,
     audience,
+    recommendedFor: audience.includes("admin")
+      ? ["admin"]
+      : audience.includes("player")
+        ? ["player"]
+        : [],
   }));
 }
 

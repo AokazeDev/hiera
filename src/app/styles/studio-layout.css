@@ -60,22 +60,6 @@
 .text-button:hover {
   border-color: var(--acid);
 }
-.studio-intro {
-  padding: 70px 4vw 45px;
-  border-bottom: 1px solid var(--line);
-}
-.studio-intro h1 {
-  font-size: clamp(36px, 5vw, 70px);
-  letter-spacing: -0.065em;
-  line-height: 0.95;
-  margin: 0;
-}
-.studio-intro > p:last-child {
-  max-width: 590px;
-  color: var(--muted);
-  line-height: 1.5;
-  margin: 22px 0 0;
-}
 .import-validation-error {
   max-width: 680px;
   margin-top: 18px;
@@ -94,9 +78,18 @@
 }
 .studio-grid {
   display: grid;
-  grid-template-columns: 230px minmax(500px, 1fr) 270px;
-  min-height: 620px;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  min-height: calc(100svh - 56px);
   max-width: 100%;
+}
+.studio-canvas-column {
+  min-width: 0;
+}
+.studio-import-error {
+  max-width: none;
+  margin: 0;
+  border-right: 0;
+  border-left: 0;
 }
 .group-rail,
 .resolution-panel {

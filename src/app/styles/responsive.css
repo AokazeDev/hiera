@@ -13,8 +13,11 @@
   .workflow {
     grid-template-columns: 1fr;
   }
+  .product-sequence {
+    grid-template-columns: 1fr;
+  }
   .studio-grid {
-    grid-template-columns: 200px minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
   }
   .resolution-panel {
     display: none;
@@ -28,6 +31,12 @@
   }
   .permission-audiences {
     grid-column: 2 / -1;
+  }
+  .catalog-permission-table > article {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .catalog-permission-tags {
+    grid-column: 1;
   }
 }
 
@@ -199,6 +208,38 @@
   .permission-row {
     grid-template-columns: 16px 1fr;
   }
+  .permission-canvas-workspace {
+    min-height: calc(100svh - 56px);
+    grid-template-rows: auto auto minmax(440px, 1fr);
+    padding: 16px;
+  }
+  .permission-canvas-toolbar {
+    align-items: start;
+    flex-direction: column;
+  }
+  .permission-canvas {
+    min-height: 440px;
+  }
+  .catalog-browser-dialog article {
+    padding: 18px;
+  }
+  .catalog-browser-facts {
+    grid-template-columns: 1fr;
+  }
+  .catalog-browser-controls,
+  .catalog-batch-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .catalog-browser-controls > label:first-child {
+    flex: auto;
+  }
+  .catalog-permission-table > article {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .catalog-permission-tags {
+    grid-column: 1;
+  }
   .permission-description,
   .permission-audiences {
     grid-column: 2;
@@ -220,6 +261,33 @@
   }
   .hero h1 {
     font-size: 52px;
+  }
+  .hero-facts {
+    grid-template-columns: 1fr;
+  }
+  .hero-facts li,
+  .hero-facts li + li {
+    min-height: 0;
+    padding: 11px 0;
+    border-left: 0;
+  }
+  .hero-facts li + li {
+    border-top: 1px solid var(--line);
+  }
+  .product-sequence {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+  .sequence-frames {
+    grid-template-columns: 1fr;
+  }
+  .sequence-frame {
+    min-height: 230px;
+  }
+  .catalog-directory-intro,
+  .catalog-directory-body {
+    padding-right: 20px;
+    padding-left: 20px;
   }
 }
 
@@ -257,6 +325,11 @@
   .catalog-detail-dialog dl {
     grid-template-columns: 1fr;
   }
+  .catalog-directory-heading,
+  .catalog-reference-heading {
+    align-items: start;
+    flex-direction: column;
+  }
   .permission-primer {
     grid-template-columns: 1fr;
     gap: 48px;
@@ -269,5 +342,12 @@
 
   .catalog-facts {
     grid-template-columns: 1fr;
+  }
+  .catalog-reference-groups li {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .catalog-reference-groups li > span {
+    text-align: left;
   }
 }

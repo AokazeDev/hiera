@@ -12,6 +12,7 @@
     "start": "next start",
     "lint": "biome check",
     "format": "biome format --write",
+    "render:landing-demo": "node scripts/render-landing-demo.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },
