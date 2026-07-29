@@ -10,6 +10,8 @@ import {
   Panel,
   Position,
   ReactFlow,
+  type ReactFlowProps,
+  useNodesState,
 } from "@xyflow/react";
 import {
   Check,
@@ -269,6 +271,48 @@ type UserNodeData = {
 };
 
 type UserFlowNode = Node<UserNodeData, "user">;
+type CanvasNode = GroupFlowNode | UserFlowNode;
+
+type PermissionReactFlowProps = Omit<
+  ReactFlowProps<CanvasNode, Edge>,
+  "nodes" | "edges" | "nodeTypes" | "onNodesChange" | "fitView" | "onInit"
+> & {
+  nodes: CanvasNode[];
+  edges: Edge[];
+  children?: React.ReactNode;
+};
+
+function PermissionReactFlow({
+  nodes: initialNodes,
+  edges,
+  children,
+  ...props
+}: PermissionReactFlowProps) {
+  const [nodes, setNodes, onNodesChange] =
+    useNodesState<CanvasNode>(initialNodes);
+  const previousNodes = useRef(initialNodes);
+  const [fitViewOnInit, setFitViewOnInit] = useState(true);
+
+  useEffect(() => {
+    if (previousNodes.current === initialNodes) return;
+    previousNodes.current = initialNodes;
+    setNodes(initialNodes);
+  }, [initialNodes, setNodes]);
+
+  return (
+    <ReactFlow<CanvasNode, Edge>
+      {...props}
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      onNodesChange={onNodesChange}
+      fitView={fitViewOnInit}
+      onInit={() => setFitViewOnInit(false)}
+    >
+      {children}
+    </ReactFlow>
+  );
+}
 
 function UserCanvasNode({ data }: NodeProps<UserFlowNode>) {
   const [isAddingPermission, setIsAddingPermission] = useState(false);
@@ -516,17 +560,6 @@ export function PermissionCanvas({
   const [positions, setPositions] = useState<
     Record<string, { x: number; y: number }>
   >({});
-  const [dragPositions, setDragPositions] = useState<
-    Record<string, { x: number; y: number }>
-  >({});
-  const [fitViewOnInit, setFitViewOnInit] = useState(true);
-  const nodeCache = useRef<{
-    backup: LuckPermsBackup;
-    positions: Record<string, { x: number; y: number }>;
-    selectedGroup: string | null;
-    selectedUser: string | null;
-    nodes: Array<GroupFlowNode | UserFlowNode>;
-  } | null>(null);
 
   useEffect(() => {
     const stored = window.localStorage.getItem("hiera-graph-positions");
@@ -773,27 +806,7 @@ export function PermissionCanvas({
       },
     };
   });
-  const generatedNodes = [...groupNodes, ...userNodes];
-  if (
-    nodeCache.current?.backup !== backup ||
-    nodeCache.current.positions !== positions ||
-    nodeCache.current.selectedGroup !== selectedGroup ||
-    nodeCache.current.selectedUser !== selectedUser
-  ) {
-    nodeCache.current = {
-      backup,
-      positions,
-      selectedGroup,
-      selectedUser,
-      nodes: generatedNodes,
-    };
-  }
-  const nodes = dragPositions
-    ? nodeCache.current.nodes.map((node) => {
-        const position = dragPositions[node.id];
-        return position ? { ...node, position } : node;
-      })
-    : nodeCache.current.nodes;
+  const nodes = [...groupNodes, ...userNodes];
   const edges: Edge[] = groupNames.flatMap((groupName) =>
     backup.groups[groupName].nodes.flatMap((node) => {
       if (node.type !== "inheritance" || !node.value) return [];
@@ -860,15 +873,12 @@ export function PermissionCanvas({
         discontinuas, membresías.
       </p>
       <div className="permission-canvas">
-        <ReactFlow
+        <PermissionReactFlow
           nodes={nodes}
           edges={edges}
-          nodeTypes={nodeTypes}
-          fitView={fitViewOnInit}
           fitViewOptions={{ padding: 0.2 }}
           minZoom={0.25}
           maxZoom={1.5}
-          onInit={() => setFitViewOnInit(false)}
           onConnect={(connection) => {
             if (!connection.source || !connection.target) return;
             if (!connection.target.startsWith("group:")) return;
@@ -892,26 +902,6 @@ export function PermissionCanvas({
               ...current,
               [node.id]: node.position,
             }));
-            setDragPositions((current) => {
-              const next = { ...current };
-              delete next[node.id];
-              return next;
-            });
-          }}
-          onNodesChange={(changes) => {
-            const positionChanges = changes.filter(
-              (change) => change.type === "position" && change.position,
-            );
-            if (!positionChanges.length) return;
-            setDragPositions((current) => {
-              const next = { ...current };
-              for (const change of positionChanges) {
-                if (change.type === "position" && change.position) {
-                  next[change.id] = change.position;
-                }
-              }
-              return next;
-            });
           }}
           onEdgeClick={(_, edge) => {
             const [kindAndSource, target] = edge.id.split("->");
@@ -945,7 +935,6 @@ export function PermissionCanvas({
                 type="button"
                 onClick={() => {
                   setPositions({});
-                  setDragPositions({});
                 }}
               >
                 Restablecer
@@ -977,7 +966,7 @@ export function PermissionCanvas({
               </div>
             </dl>
           </Panel>
-        </ReactFlow>
+        </PermissionReactFlow>
       </div>
       <dialog
         ref={dialogRef}
