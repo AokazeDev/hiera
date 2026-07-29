@@ -57,6 +57,16 @@
   background: #dce9a7;
   box-shadow: 3px 3px 0 #b6c96b;
 }
+.inheritance-graph-node.is-traversal-target {
+  border-color: #526b10;
+  background: #edf0d8;
+}
+.inheritance-graph-canvas
+  .react-flow__edge.is-traversed
+  .react-flow__edge-path {
+  stroke: #526b10;
+  stroke-width: 2.5;
+}
 .inheritance-graph-node.is-missing {
   border-color: #a76868;
   background: #f0dede;

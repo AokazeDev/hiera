@@ -10,8 +10,9 @@ import {
   Position,
   ReactFlow,
 } from "@xyflow/react";
+import gsap from "gsap";
 import { Info, MapPin, TriangleAlert, UserRound } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   buildInheritanceGraph,
   buildPermissionProvenanceGraph,
@@ -42,6 +43,7 @@ type GraphNodeData = {
   groupName: string;
   missing: boolean;
   selected: boolean;
+  traversing: boolean;
   onSelectGroup: (groupName: string) => void;
   draggingPermissionFrom: string | null;
   draggingCatalogPermission: boolean;
@@ -60,7 +62,7 @@ function GroupGraphNode({ data }: NodeProps<Node<GraphNodeData>>) {
   return (
     <button
       type="button"
-      className={`inheritance-graph-node${data.selected ? " is-selected" : ""}${data.missing ? " is-missing" : ""}${isDropTarget ? " is-drop-target" : ""}`}
+      className={`inheritance-graph-node${data.selected ? " is-selected" : ""}${data.traversing ? " is-traversal-target" : ""}${data.missing ? " is-missing" : ""}${isDropTarget ? " is-drop-target" : ""}`}
       disabled={data.missing}
       onClick={() => data.onSelectGroup(data.groupName)}
       onDragOver={(event) => {
@@ -127,6 +129,9 @@ export function InheritanceGraph({
   onDropCatalogPermission,
   permissionProvenance,
 }: InheritanceGraphProps) {
+  const root = useRef<HTMLElement>(null);
+  const traversalTimeout = useRef<number | null>(null);
+  const [traversedEdge, setTraversedEdge] = useState<string | null>(null);
   const isUserProvenance = Boolean(backup && userId && permissionProvenance);
   const graph =
     backup && userId && permissionProvenance
@@ -145,6 +150,57 @@ export function InheritanceGraph({
             )
           : buildInheritanceGraph(backup, groupName)
         : null;
+
+  useEffect(
+    () => () => {
+      if (traversalTimeout.current !== null) {
+        window.clearTimeout(traversalTimeout.current);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (!traversedEdge || !root.current) return;
+    const media = window.matchMedia("(prefers-reduced-motion: no-preference)");
+    if (!media.matches) return;
+    const context = gsap.context(() => {
+      gsap.fromTo(
+        ".inheritance-graph-node.is-traversal-target",
+        { opacity: 0.6, scale: 0.98 },
+        { opacity: 1, scale: 1, duration: 0.22, ease: "power2.out" },
+      );
+      gsap.fromTo(
+        ".react-flow__edge.is-traversed",
+        { opacity: 0.35 },
+        { opacity: 1, duration: 0.22, ease: "power2.out" },
+      );
+    }, root);
+    return () => context.revert();
+  }, [traversedEdge]);
+
+  function traverseToGroup(targetGroup: string) {
+    const edge = graph?.edges.find(
+      (candidate) =>
+        candidate.source === groupName && candidate.target === targetGroup,
+    );
+    if (!edge) {
+      onSelectGroup(targetGroup);
+      return;
+    }
+    if (traversalTimeout.current !== null) return;
+    if (!window.matchMedia("(prefers-reduced-motion: no-preference)").matches) {
+      onSelectGroup(targetGroup);
+      return;
+    }
+
+    setTraversedEdge(edge.id);
+    traversalTimeout.current = window.setTimeout(() => {
+      traversalTimeout.current = null;
+      setTraversedEdge(null);
+      onSelectGroup(targetGroup);
+    }, 220);
+  }
 
   if (!backup || (!groupName && !userId) || !graph) {
     return (
@@ -180,7 +236,10 @@ export function InheritanceGraph({
           groupName: "kind" in node ? node.label : node.id,
           missing: "missing" in node ? node.missing : false,
           selected: node.label === groupName,
-          onSelectGroup,
+          traversing: graph.edges.some(
+            (edge) => edge.id === traversedEdge && edge.target === node.id,
+          ),
+          onSelectGroup: traverseToGroup,
           draggingPermissionFrom,
           draggingCatalogPermission,
           onDropPermission,
@@ -192,11 +251,13 @@ export function InheritanceGraph({
   const edges: Edge[] = graph.edges.map((edge) => ({
     ...edge,
     type: "smoothstep",
+    className: edge.id === traversedEdge ? "is-traversed" : undefined,
     interactionWidth: 0,
   }));
 
   return (
     <section
+      ref={root}
       className="workspace inheritance-graph-workspace"
       aria-labelledby="inheritance-graph-title"
     >
@@ -251,7 +312,7 @@ export function InheritanceGraph({
               graphNode &&
               (!("kind" in graphNode) || graphNode.kind === "group")
             ) {
-              onSelectGroup(graphNode.label);
+              traverseToGroup(graphNode.label);
             }
           }}
         >
@@ -276,7 +337,10 @@ export function InheritanceGraph({
               {"kind" in node && node.kind !== "group" ? (
                 <span>{node.label}</span>
               ) : (
-                <button type="button" onClick={() => onSelectGroup(node.label)}>
+                <button
+                  type="button"
+                  onClick={() => traverseToGroup(node.label)}
+                >
                   {node.label}
                 </button>
               )}
