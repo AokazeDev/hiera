@@ -21,12 +21,21 @@ export const metadata: Metadata = {
     title: "Hiera | LuckPerms, made legible",
     description:
       "Entiende permisos, grupos y herencias de LuckPerms sin entregar tus datos.",
+    images: [
+      {
+        url: "/hiera-og.png",
+        width: 1200,
+        height: 640,
+        alt: "Hiera: permisos de LuckPerms legibles y locales",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Hiera | LuckPerms, made legible",
     description:
       "Entiende permisos, grupos y herencias de LuckPerms sin entregar tus datos.",
+    images: ["/hiera-og.png"],
   },
   robots: { index: true, follow: true },
 };

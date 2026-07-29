@@ -212,6 +212,9 @@
   .permission-atlas {
     padding: 14px;
   }
+  .permission-atlas::before {
+    display: none;
+  }
   .atlas-footer {
     font-size: 8px;
   }
@@ -245,5 +248,20 @@
   ::view-transition-new(.hiera-back),
   ::view-transition-new(.workspace-swap) {
     animation-name: hiera-fade-in;
+  }
+}
+@media (max-width: 760px) {
+  .permission-primer {
+    grid-template-columns: 1fr;
+    gap: 48px;
+    padding: 80px 5vw;
+  }
+
+  .permission-primer > .quiet-action {
+    grid-column: auto;
+  }
+
+  .catalog-facts {
+    grid-template-columns: 1fr;
   }
 }

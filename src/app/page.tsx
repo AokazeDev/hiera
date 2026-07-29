@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { ViewTransition } from "react";
+import { LandingMotion } from "@/components/landing-motion";
 
 const steps = [
   ["01", "Exporta", "/lp export hiera-backup.json"],
@@ -16,6 +17,17 @@ const steps = [
 ];
 
 export default function Home() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "Hiera",
+    applicationCategory: "DeveloperApplication",
+    operatingSystem: "Web",
+    url: "https://hiera.symera.cloud/",
+    description:
+      "Editor local-first para inspeccionar y editar backups JSON de LuckPerms.",
+  };
+
   return (
     <ViewTransition
       enter={{
@@ -30,7 +42,10 @@ export default function Home() {
       }}
       default="none"
     >
-      <main>
+      <LandingMotion>
+        <script type="application/ld+json">
+          {JSON.stringify(structuredData)}
+        </script>
         <nav className="site-nav" aria-label="Navegacion principal">
           <Link className="wordmark" href="/">
             HIERA<span>.</span>
@@ -38,8 +53,9 @@ export default function Home() {
           <div className="nav-links">
             <a href="#flujo">Flujo</a>
             <a href="#principios">Principios</a>
-            <Link href="/studio" transitionTypes={["hiera-forward"]}>
-              Catalogo
+            <Link href="/guia/permisos">Guía</Link>
+            <Link href="/catalogos" transitionTypes={["hiera-forward"]}>
+              Catálogos
             </Link>
           </div>
           <Link
@@ -134,7 +150,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="manifesto" id="principios">
+        <section className="manifesto" id="principios" data-reveal-section>
           <p className="eyebrow">UN ARCHIVO NO DEBERIA SER UNA CAJA NEGRA</p>
           <p className="manifesto-copy">
             Los permisos son infraestructura. Hiera los trata como tal: con
@@ -176,7 +192,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="workflow" id="flujo">
+        <section className="workflow" id="flujo" data-reveal-section>
           <div className="workflow-intro">
             <p className="eyebrow">DEL SERVIDOR AL MAPA</p>
             <h2>Un flujo seguro de cuatro movimientos.</h2>
@@ -198,22 +214,65 @@ export default function Home() {
           </ol>
         </section>
 
-        <section className="closing">
-          <p className="eyebrow">PRIMER CATALOGO DISPONIBLE</p>
-          <h2>AuthMe Reloaded, documentado permiso a permiso.</h2>
+        <section
+          className="permission-primer"
+          aria-labelledby="permission-primer-title"
+          data-reveal-section
+        >
+          <div>
+            <p className="eyebrow">LECTURA DEL BACKUP</p>
+            <h2 id="permission-primer-title">
+              Directo, heredado, contextual: no son la misma cosa.
+            </h2>
+          </div>
+          <div className="primer-rules">
+            <article>
+              <span className="primer-index">01</span>
+              <h3>Directo</h3>
+              <p>
+                Un nodo definido en el grupo o usuario que estás inspeccionando.
+                Hiera lo conserva separado de lo que llega desde otros grupos.
+              </p>
+            </article>
+            <article>
+              <span className="primer-index">02</span>
+              <h3>Herencia</h3>
+              <p>
+                Un grupo puede recibir nodos de sus padres. La resolución indica
+                el origen para que una regla no parezca local cuando no lo es.
+              </p>
+            </article>
+            <article>
+              <span className="primer-index">03</span>
+              <h3>Contexto y precedencia</h3>
+              <p>
+                Un nodo contextual solo aplica cuando sus pares activos
+                coinciden. Entre coincidencias, Hiera prioriza el nodo directo y
+                después el contexto más específico.
+              </p>
+            </article>
+          </div>
+          <Link className="quiet-action" href="/guia/permisos">
+            Leer la guía de resolución
+          </Link>
+        </section>
+
+        <section className="closing" data-reveal-section>
+          <p className="eyebrow">EL EDITOR ES EL PRODUCTO</p>
+          <h2>Trabaja con cualquier plugin. Usa los catálogos cuando ayuden.</h2>
           <p>
-            Filtra permisos de administración, jugadores y privilegios que
-            conviene reservar para un grupo específico.
+            Permisos personalizados, herencias, contextos y procedencia primero.
+            Las fuentes documentales son atajos verificables, no límites del editor.
           </p>
           <Link
             className="primary-action"
-            href="/studio?catalog=authme-reloaded"
+            href="/catalogos"
             transitionTypes={["hiera-forward"]}
           >
-            Explorar AuthMe Reloaded <ArrowUpRight size={17} />
+            Ver índice de catálogos <ArrowUpRight size={17} />
           </Link>
         </section>
-      </main>
+      </LandingMotion>
     </ViewTransition>
   );
 }
